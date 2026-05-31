@@ -24,6 +24,7 @@ class User{
         if($user && password_verify($password, $user['mus_password'])){ //jika user ditemukan dengan password yang sesuai
             return [                             //kembalikan hasil sukses berdasarkan nama dan role user
                 'success' => true, 
+                'user_id' => $user['mus_id_users'],
                 'nama'    => $user['mus_name'],  //ambil nama user dari tabel mst_users
                 'role'    => $user['mus_role'] 
             ];
@@ -58,7 +59,9 @@ $result = $user->cekLogin($email, $password); //hasil cekLogin akan mengembalika
 //Jika hasilnya success,buat session untuk menyimpan sesi login
 if($result['success']){
     session_start();
-    $_SESSION['user'] = $result; 
+    $_SESSION['user_id'] = $result['user_id'];
+    $_SESSION['nama']    = $result['nama'];
+    $_SESSION['role']    = $result['role'];
 }
 //Lempar hasil cekLogin dalam bentuk JSON ke login.js
 echo json_encode($result);

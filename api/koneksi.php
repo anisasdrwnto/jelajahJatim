@@ -15,7 +15,7 @@ try{
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, //lempar pesan jika terjadi error 
         PDO::MYSQL_ATTR_SSL_CA => dirname(__DIR__) . '/isrgrootx1.pem',
     ]);
-    echo "Koneksi berhasil!";
+    // echo "Koneksi berhasil!";
 } catch (PDOException $e) {
     die("Koneksi gagal: " . $e->getMessage());
 }

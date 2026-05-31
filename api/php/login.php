@@ -35,8 +35,8 @@
                     <div class="carousel-overlay"></div>
                     
                     <div class="carousel-content">
-                        <h2 class="fw-bold mb-3">Mulai Petualangan Alammu</h2>
-                        <p class="fw-light mb-0">Akses panduan wisata, simpan destinasi favorit, dan rencanakan liburanmu dari Bromo hingga Kawah Ijen dalam satu tempat.</p>
+                       <h2 class="fw-bold mb-3">Halo, Selamat Datang!👋</h2>
+                       <p class="fw-light mb-0">Event seru udah nunggu kamu. Masuk sekarang, cek jadwal terbaru, dan share pengalamanmu di Jelajah Jawa Timur.</p>
                     </div>
                 </div>
             </div>
@@ -45,11 +45,11 @@
                 <div class="w-100" style="max-width: 400px;">
                     
                     <div class="d-lg-none mb-4 fw-bold fs-4 text-dark text-center">
-                        <span class="logo-icon"></span>Jelajah Jatim
+                         <img src="/assets/logo2.png" alt="Logo" class="logo-icon-img-2">
                     </div>
 
                     <h2 class="fw-bold text-dark mb-2">Masuk ke Akun</h2>
-                    <p class="text-muted mb-4 fs-6">Akses destinasi impianmu kapan saja, di mana saja. Mari jelajahi surga tersembunyi!</p>
+                    <p class="text-muted mb-4 fs-6">Telusuri semua event yang sedang berlangsung di Jawa Timur.Akses mudah dan cepat.</p>
 
                     <form>
                         <div class="mb-3">
@@ -70,14 +70,14 @@
                             <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" style="width: 20px; height: 20px;">
                             Google
                         </button>
-                        <button class="btn btn-light border flex-grow-1 py-2 text-secondary fw-medium d-flex align-items-center justify-content-center gap-2" id="btnFacebook">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook Logo" style="width: 20px; height: 20px;">
-                            Facebook
+                        <button type="button" class="btn btn-light border flex-grow-1 py-2 text-secondary fw-medium d-flex align-items-center justify-content-center gap-2" id="btnApple">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple Logo" style="width: 20px; height: 20px;">
+                            Apple
                         </button>
                     </div>
 
                     <p class="text-center text-muted small mb-0">
-                        Belum punya akun? <a href="#" class="text-green fw-bold text-decoration-none">Daftar Akun</a>
+                        Belum punya akun? <a href="register.php" class="text-green fw-bold text-decoration-none">Daftar Akun</a>
                     </p>
                 </div>
             </div>

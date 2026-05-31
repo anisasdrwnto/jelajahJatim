@@ -33,7 +33,7 @@ $(document).ready(function(){
                         }else if(response.role === 'ADMIN'){
                             window.location.replace(BASE_URL + 'php/dashboard_admin.php');
                         }else{
-
+                            window.location.replace(BASE_URL + 'php/index.php');
                         }
                     })
                 }else{

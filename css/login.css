@@ -1,6 +1,8 @@
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #f3f4f6;
+    background-image: url('../assets/background-login.jpg');
+    background-size: cover;
+    background-position: center;
 }
 
 :root {
@@ -8,7 +10,7 @@ body {
     --jatim-green-hover: #0f5242;
 }
 
-/* Card Container */
+
 .login-card {
     border-radius: 24px;
     overflow: hidden;
@@ -16,7 +18,7 @@ body {
     min-height: 600px; /* Tinggi minimal card */
 }
 
-/* --- KUNCI SLIDER FULL TANPA PUTIH --- */
+
 .carousel, .carousel-inner {
     position: absolute;
     top: 0;
@@ -37,7 +39,6 @@ body {
     object-fit: cover;
     object-position: center;
 }
-/* ------------------------------------- */
 
 .carousel-overlay {
     position: absolute;
@@ -60,6 +61,13 @@ body {
 
 .logo-icon-img {
     position: 40px;
+    width: 120px;
+    margin-right: 12px;
+    vertical-align: middle;
+}
+
+.logo-icon-img-2 {
+    position: 200px;
     width: 120px;
     margin-right: 12px;
     vertical-align: middle;

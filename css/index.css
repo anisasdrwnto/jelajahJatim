@@ -653,6 +653,19 @@ body {
     transform: translateY(-2px);
 }
 
+.profile-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2d6a4f, #52b788);
+    color: white;
+    font-size: 1.2rem;        /* ukuran icon */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
 @media (max-width: 991px) {
     .contact-wrapper {
         margin-top: 2rem;

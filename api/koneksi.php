@@ -11,13 +11,17 @@ $cert_path = dirname(__DIR__) . '/isrgrootx1.pem';
 
 /**
  * PENDETEKSI OTOMATIS VERSI PHP (Fitur Lintas Laptop)
- * Jika PHP 8.5+ (Laptop Kamu), gunakan Pdo\Mysql::ATTR_SSL_CA secara dinamis.
- * Jika PHP 8.3 ke bawah (Laptop Temen), gunakan angka 1012 (Nomor identitas asli dari PDO::MYSQL_ATTR_SSL_CA).
+ * Menangani perbedaan konstanta antara PHP 8.5 (Laptop Temen) dan PHP 8.3 (Laptop Lu)
  */
 if (class_exists('Pdo\Mysql') && defined('Pdo\Mysql::ATTR_SSL_CA')) {
-    $ssl_attribute = constant('Pdo\Mysql::ATTR_SSL_CA'); // Laptop Kamu
+    // Laptop Temen (PHP 8.4 / 8.5)
+    $ssl_ca_attr     = constant('Pdo\Mysql::ATTR_SSL_CA');
+    $ssl_verify_attr = constant('Pdo\Mysql::ATTR_SSL_VERIFY_SERVER_CERT');
 } else {
-    $ssl_attribute = 1012; // Laptop Temen (Aman dari Fatal Error)
+    // Laptop Lu (PHP 8.3 ke bawah)
+    // Tidak perlu pakai angka 1012, pakai konstanta bawaan resminya saja karena PHP 8.3 sudah kenal
+    $ssl_ca_attr     = PDO::MYSQL_ATTR_SSL_CA;
+    $ssl_verify_attr = PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT;
 }
 
 // Deteksi koneksi
@@ -26,7 +30,12 @@ try {
     
     $pdo = new PDO($dsn, $username, $password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, 
-        $ssl_attribute => $cert_path, // Menggunakan attribute yang sudah disesuaikan otomatis
+        
+        // 1. Memasukkan sertifikat SSL
+        $ssl_ca_attr => $cert_path, 
+        
+        // 2. OBAT ERROR 1105: Matikan verifikasi ketat server cert agar SSL tidak diam-diam mati
+        $ssl_verify_attr => false 
     ]);
     
     // echo "Koneksi berhasil!"; 

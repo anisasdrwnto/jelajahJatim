@@ -19,6 +19,7 @@ session_start();
 <body class="antialiased">
   <div class="page">
     
+    <!---- Header ---->
     <?php include('../template/header.php'); ?>
 
     <div class="page-wrapper">
@@ -38,9 +39,7 @@ session_start();
 
       <div class="page-body">
         <div class="container-xl">
-
           <div class="row row-deck row-cards mb-4">
-            
             <div class="col-sm-6 col-lg-3">
               <div class="card card-sm">
                 <div class="card-body">
@@ -52,7 +51,7 @@ session_start();
                     </div>
                     <div class="col">
                       <div class="text-muted small">Total Destinasi</div>
-                      <div class="h3 mb-0">24</div>
+                      <div class="h3 mb-0" id="cardTotalDestinasi">0</div>
                     </div>
                   </div>
                 </div>
@@ -70,7 +69,7 @@ session_start();
                     </div>
                     <div class="col">
                       <div class="text-muted small">Aktif</div>
-                      <div class="h3 mb-0">20</div>
+                      <div class="h3 mb-0" id="cardAktif">0</div>
                     </div>
                   </div>
                 </div>
@@ -88,7 +87,7 @@ session_start();
                     </div>
                     <div class="col">
                       <div class="text-muted small">Nonaktif</div>
-                      <div class="h3 mb-0">4</div>
+                      <div class="h3 mb-0" id="cardNonaktif">0</div>
                     </div>
                   </div>
                 </div>
@@ -106,7 +105,7 @@ session_start();
                     </div>
                     <div class="col">
                       <div class="text-muted small">Kategori</div>
-                      <div class="h3 mb-0">5</div>
+                      <div class="h3 mb-0" id="cardKategori">0</div>
                     </div>
                   </div>
                 </div>
@@ -140,9 +139,9 @@ session_start();
                     <span class="input-group-text"><i class="ti ti-search"></i></span>
                     <input type="text" class="form-control" id="search-destinasi" placeholder="Cari destinasi..."/>
                   </div>
-                  <button type="button" class="btn btn-primary btn-sm" id="btn-tambah-destinasi" data-bs-toggle="modal" data-bs-target="#modalDestinasi">
-                    <i class="ti ti-plus me-1"></i>Tambah Destinasi
-                  </button>
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-AddDestinasi" data-bs-toggle="modal" data-bs-target="#modalAddDestinasi">
+                            <i class="ti ti-plus me-1"></i>Tambah Destinasi
+                        </button>
                 </div>
 
               </div>
@@ -152,50 +151,19 @@ session_start();
               <table class="table table-vcenter table-hover card-table">
                 <thead>
                   <tr>
-                    <th class="w-1">#</th>
-                    <th class="w-1">Foto</th>
+                    <th class="w-1">ID Destinasi Wisata</th>
                     <th>Nama Destinasi</th>
-                    <th class="d-none d-lg-table-cell">Lokasi</th>
+                    <th class="d-none d-lg-table-cell">Kabupaten/Kota</th>
+                    <th class="d-none d-lg-table-cell">Wilayah</th>
+                    <th class="d-none d-lg-table-cell">Alamat Lengkap</th>
+                    <th class="w-1">Foto</th>
                     <th class="d-none d-md-table-cell">Kategori</th>
-                    <th class="d-none d-sm-table-cell">Harga Tiket</th>
+                    <th class="d-none d-sm-table-cell">Deskripsi</th>
                     <th>Status</th>
                     <th class="text-end text-nowrap">Aksi</th>
                   </tr>
                 </thead>
-                <tbody id="tbody-destinasi">
-                  <tr data-id="1">
-                    <td class="text-muted">1</td>
-                    <td><span class="avatar avatar-sm bg-blue-lt text-blue rounded"><i class="ti ti-photo"></i></span></td>
-                    <td><div class="fw-medium">Kawah Ijen</div><div class="text-muted small">Blue fire yang memukau</div></td>
-                    <td class="text-muted d-none d-lg-table-cell">Banyuwangi</td>
-                    <td class="d-none d-md-table-cell"><span class="badge bg-blue-lt text-blue">Alam</span></td>
-                    <td class="text-muted d-none d-sm-table-cell">Rp 5.000</td>
-                    <td><span class="badge bg-success-lt text-success">Aktif</span></td>
-                    <td class="text-end text-nowrap">
-                      <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-info btn-detail" data-id="1" title="Detail"><i class="ti ti-eye"></i></button>
-                        <button class="btn btn-outline-warning btn-edit" data-id="1" title="Edit" data-bs-toggle="modal" data-bs-target="#modalDestinasi"><i class="ti ti-edit"></i></button>
-                        <button class="btn btn-outline-danger btn-hapus" data-id="1" title="Hapus" data-bs-toggle="modal" data-bs-target="#modalHapus"><i class="ti ti-trash"></i></button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr data-id="2">
-                    <td class="text-muted">2</td>
-                    <td><span class="avatar avatar-sm bg-blue-lt text-blue rounded"><i class="ti ti-photo"></i></span></td>
-                    <td><div class="fw-medium">Gunung Bromo</div><div class="text-muted small">Sunrise terbaik Jawa Timur</div></td>
-                    <td class="text-muted d-none d-lg-table-cell">Probolinggo</td>
-                    <td class="d-none d-md-table-cell"><span class="badge bg-blue-lt text-blue">Alam</span></td>
-                    <td class="text-muted d-none d-sm-table-cell">Rp 29.000</td>
-                    <td><span class="badge bg-success-lt text-success">Aktif</span></td>
-                    <td class="text-end text-nowrap">
-                      <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-info btn-detail" data-id="2" title="Detail"><i class="ti ti-eye"></i></button>
-                        <button class="btn btn-outline-warning btn-edit" data-id="2" title="Edit" data-bs-toggle="modal" data-bs-target="#modalDestinasi"><i class="ti ti-edit"></i></button>
-                        <button class="btn btn-outline-danger btn-hapus" data-id="2" title="Hapus" data-bs-toggle="modal" data-bs-target="#modalHapus"><i class="ti ti-trash"></i></button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
+                <tbody id="tbodyDestinasi"></tbody>
               </table>
             </div>
 
@@ -217,24 +185,21 @@ session_start();
           </div>
           </div>
       </div>
-      <footer class="footer footer-transparent d-print-none">
-        <div class="container-xl">
-          <div class="row text-center">
-            <div class="col-12">
-              <ul class="list-inline list-inline-dots mb-0">
-                <li class="list-inline-item">© 2025 Jelajah Wisata Jawa Timur</li>
-                <li class="list-inline-item"><a href="#" class="link-secondary">Bantuan</a></li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </footer>
+
+      <?php include 'create_destinasi.php'; ?>
+      <?php include 'edit_destinasi.php'; ?>
+      <!---- Footer ---->
+      <?php include('../template/footer.php'); ?>
 
     </div>
   </div>
 
   <script src="../../../assets/tabler/dist/js/tabler.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-
+    <script>
+        const BASE_URL = "/api/";
+    </script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="../../../js/destinasi.js"></script>
 </body>
 </html>

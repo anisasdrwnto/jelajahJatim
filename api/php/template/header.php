@@ -49,7 +49,6 @@ $current_dir  = basename(dirname($_SERVER['PHP_SELF']));
           </a>
           <div class="dropdown-menu <?= ($current_dir == 'laporan') ? 'show' : '' ?>">
             <a class="dropdown-item" href="#">Review Wisatawan</a>
-            <a class="dropdown-item" href="#">Status Wisatawan</a>
             <a class="dropdown-item" href="#">Statistik Laporan</a>
           </div>
         </li>
@@ -70,7 +69,7 @@ $current_dir  = basename(dirname($_SERVER['PHP_SELF']));
             <span class="nav-link-icon d-md-none d-lg-inline-block">
               <i class="ti ti-palette"></i>
             </span>
-            <span class="nav-link-title">Tampilan</span>
+            <span class="nav-link-title">Pilih Mode</span>
           </a>
           <div class="dropdown-menu">
             <a href="javascript:void(0)" class="dropdown-item theme-btn" data-theme-value="light" onclick="setTheme('light')">
@@ -84,7 +83,7 @@ $current_dir  = basename(dirname($_SERVER['PHP_SELF']));
             </a>
           </div>
         </li>
-        
+
         <li class="nav-item">
           <a class="nav-link" href="<?= $base_url ?>/logout.php">
             <span class="nav-link-icon d-md-none d-lg-inline-block text-danger">

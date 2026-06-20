@@ -12,7 +12,9 @@ $current_dir  = basename(dirname($_SERVER['PHP_SELF']));
     </button>
 
     <h1 class="navbar-brand">
-      <a href="<?= $base_url ?>/dashboard_admin.php">Jelajah Wisata</a>
+      <a href="<?= $base_url ?>/dashboard_admin.php">
+        <img src="<?= $base_url ?>/../../../assets/logo.png" height="32">
+      </a>
     </h1>
     
     <div class="collapse navbar-collapse" id="sidebar-menu">
@@ -36,7 +38,7 @@ $current_dir  = basename(dirname($_SERVER['PHP_SELF']));
           </a>
           <div class="dropdown-menu <?= ($current_dir == 'kelola') ? 'show' : '' ?>">
             <a class="dropdown-item <?= ($current_page == 'destinasi_wisata.php') ? 'active' : '' ?>" href="<?= $base_url ?>/kelola/destinasi_wisata.php">Destinasi Wisata</a>
-            <a class="dropdown-item <?= ($current_page == 'event_wisata.php') ? 'active' : '' ?>" href="#">Event Wisata</a>
+            <a class="dropdown-item <?= ($current_page == 'event_main.php') ? 'active' : '' ?>" href="<?= $base_url ?>/event/event_main.php">Event Wisata</a>
           </div>
         </li>
 

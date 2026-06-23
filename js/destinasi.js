@@ -106,10 +106,7 @@ $(document).ready(function () {
                     $('#editDeskripsi').val(item.mdw_deskripsi);
                     $('#editFotoLama').val(item.mdw_foto);
 
-                    var fotoSrc = item.mdw_foto
-                        ? BASE_URL + '../uploads/destinasi/' + item.mdw_foto
-                        : BASE_URL + '../assets/img/placeholder.jpg';
-                    $('#editPreviewFoto').attr('src', fotoSrc).show();
+                    $('#editPreviewFoto').attr('src', getFotoUrl(item.mdw_foto)).show();
 
                     $('#modalEditDestinasi').modal('show');
 
@@ -367,9 +364,7 @@ function renderTbody(data, keyword) {
             };
             var kelasStatus = badgeStatus[item.mdw_status] || 'bg-secondary text-white';
 
-            var fotoSrc = item.mdw_foto
-                ? BASE_URL + '../uploads/destinasi/' + item.mdw_foto
-                : BASE_URL + '../assets/img/placeholder.jpg';
+            var fotoSrc = getFotoUrl(item.mdw_foto);
 
             // Highlight keyword pada kolom teks jika ada
             var nama     = hlKeyword(escHtml(item.mdw_nama_destinasi_wisata), keyword);
@@ -388,7 +383,8 @@ function renderTbody(data, keyword) {
                     <td class="w-1">
                         <img src="${fotoSrc}" alt="Foto Destinasi" 
                              width="60" height="60" 
-                             style="object-fit:cover; border-radius:6px;">
+                             style="object-fit:cover; border-radius:6px;"
+                             onerror="this.src='${BASE_URL}../assets/img/placeholder.jpg'">
                     </td>
                     <td class="d-none d-md-table-cell">
                         <span class="badge ${kelasKategori}">${kategori}</span>
@@ -453,6 +449,19 @@ function loadCardDestinasi() {
             console.error('Gagal load statistik:', xhr.responseText);
         }
     });
+}
+
+// Helper — resolve URL foto: Cloudinary (http/https) langsung pakai,
+// nama file lokal lama fallback ke path uploads, kosong pakai placeholder
+function getFotoUrl(foto) {
+    if (!foto) {
+        return BASE_URL + '../assets/img/placeholder.jpg';
+    }
+    if (foto.startsWith('http://') || foto.startsWith('https://')) {
+        return foto; // sudah full URL Cloudinary, langsung pakai
+    }
+    // data lama: nama file lokal
+    return BASE_URL + '../uploads/destinasi/' + foto;
 }
 
 function hlKeyword(teks, keyword) {

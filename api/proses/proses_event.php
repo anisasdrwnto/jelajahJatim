@@ -27,24 +27,27 @@ class Event {
                 (:id, :nama, :tanggal, :waktuMulai, :waktuSelesai, :lokasi, :kategori, :deskripsi, :foto, :status, :createBy)"
         );
 
-        $statement->execute([
-            ':id'           => $id_Baru,
-            ':nama'         => $data['namaEvent'],
-            ':tanggal'      => $data['tanggalEvent'],
-            ':waktuMulai'   => $data['waktuMulai'],
-            ':waktuSelesai' => $data['waktuSelesai'],
-            ':lokasi'       => $data['lokasi'],
-            ':kategori'     => $data['kategori'],
-            ':deskripsi'    => $data['deskripsi'] ?? null,
-            ':foto'         => $namaFoto['nama_file'],
-            ':status'       => $data['status'],
-            ':createBy'     => $_SESSION['nama'] ?? 'System'
-        ]);
-
-        if ($statement->rowCount()) {
-            return ['success' => true, 'message' => 'Event wisata berhasil ditambahkan!', 'id' => $id_Baru];
+        try {
+            $statement->execute([
+                ':id'           => $id_Baru,
+                ':nama'         => $data['namaEvent'],
+                ':tanggal'      => $data['tanggalEvent'],
+                ':waktuMulai'   => $data['waktuMulai'],
+                ':waktuSelesai' => $data['waktuSelesai'],
+                ':lokasi'       => $data['lokasi'],
+                ':kategori'     => $data['kategori'],
+                ':deskripsi'    => $data['deskripsi'] ?? null,
+                ':foto'         => $namaFoto['nama_file'],
+                ':status'       => $data['status'],
+                ':createBy'     => $_SESSION['nama'] ?? 'System'
+            ]);
+        } catch (Throwable $e) {
+            // INSERT gagal -> hapus foto yang sudah keburu diupload, biar tidak jadi file yatim
+            $this->hapusFoto($namaFoto['nama_file']);
+            throw $e;
         }
-        return ['success' => false, 'message' => 'Gagal menambahkan event wisata!'];
+
+        return ['success' => true, 'message' => 'Event wisata berhasil ditambahkan!', 'id' => $id_Baru];
     }
 
     // Ambil semua event
@@ -137,15 +140,20 @@ class Event {
             return ['success' => false, 'message' => 'Event tidak ditemukan!'];
         }
 
-        $fotoFinal = $dataLama['data']['mev_foto'];
+        $fotoLama         = $dataLama['data']['mev_foto'];
+        $fotoFinal        = $fotoLama;
+        $fotoBaruDiupload = false;
 
         if ($foto && $foto['error'] === UPLOAD_ERR_OK) {
             $uploadBaru = $this->uploadFoto($foto);
             if (!$uploadBaru['success']) {
                 return $uploadBaru;
             }
-            $this->hapusFoto($fotoFinal);
-            $fotoFinal = $uploadBaru['nama_file'];
+            $fotoFinal        = $uploadBaru['nama_file'];
+            $fotoBaruDiupload = true;
+            // PENTING: foto lama BELUM dihapus di sini.
+            // Baru dihapus setelah UPDATE database berhasil (lihat di bawah),
+            // supaya kalau UPDATE gagal, foto lama tidak ikut hilang dan jadi data yatim.
         }
 
         $stmt = $this->db->prepare(
@@ -162,23 +170,35 @@ class Event {
             WHERE mev_id_event = :id"
         );
 
-        $stmt->execute([
-            ':nama'         => $data['namaEvent'],
-            ':tanggal'      => $data['tanggalEvent'],
-            ':waktuMulai'   => $data['waktuMulai'],
-            ':waktuSelesai' => $data['waktuSelesai'],
-            ':lokasi'       => $data['lokasi'],
-            ':kategori'     => $data['kategori'],
-            ':deskripsi'    => $data['deskripsi'] ?? null,
-            ':foto'         => $fotoFinal,
-            ':status'       => $data['status'],
-            ':id'           => $id
-        ]);
-
-        if ($stmt->rowCount()) {
-            return ['success' => true, 'message' => 'Event wisata berhasil diperbarui!'];
+        try {
+            $stmt->execute([
+                ':nama'         => $data['namaEvent'],
+                ':tanggal'      => $data['tanggalEvent'],
+                ':waktuMulai'   => $data['waktuMulai'],
+                ':waktuSelesai' => $data['waktuSelesai'],
+                ':lokasi'       => $data['lokasi'],
+                ':kategori'     => $data['kategori'],
+                ':deskripsi'    => $data['deskripsi'] ?? null,
+                ':foto'         => $fotoFinal,
+                ':status'       => $data['status'],
+                ':id'           => $id
+            ]);
+        } catch (Throwable $e) {
+            // UPDATE gagal -> hapus file baru yang sudah keburu diupload, biar tidak jadi sampah
+            if ($fotoBaruDiupload) {
+                $this->hapusFoto($fotoFinal);
+            }
+            throw $e;
         }
-        return ['success' => false, 'message' => 'Tidak ada perubahan data!'];
+
+        // UPDATE sudah berhasil dieksekusi -> sekarang baru aman hapus foto lama dari disk
+        if ($fotoBaruDiupload) {
+            $this->hapusFoto($fotoLama);
+        }
+
+        // CATATAN: rowCount() TIDAK dipakai sebagai penentu sukses/gagal,
+        // karena bisa bernilai 0 walau query valid (kalau semua nilai kebetulan identik).
+        return ['success' => true, 'message' => 'Event wisata berhasil diperbarui!'];
     }
 
     // Hapus event
@@ -216,9 +236,18 @@ class Event {
 
     // Helper - upload foto
     private function uploadFoto($foto) {
+        if (!$foto || !isset($foto['tmp_name']) || $foto['error'] !== UPLOAD_ERR_OK) {
+            return ['success' => false, 'message' => 'Foto event harus diupload!'];
+        }
+
         $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
         $maxSize      = 2 * 1024 * 1024;
         $uploadDir    = '../../uploads/event/';
+
+        if (!is_dir($uploadDir)) {
+            // Folder belum ada -> coba buat otomatis, biar tidak gagal upload karena ini
+            mkdir($uploadDir, 0775, true);
+        }
 
         if (!in_array($foto['type'], $allowedTypes)) {
             return ['success' => false, 'message' => 'Format foto tidak valid! Gunakan JPG atau PNG.'];
@@ -227,8 +256,9 @@ class Event {
             return ['success' => false, 'message' => 'Ukuran foto maksimal 2MB!'];
         }
 
-        $ekstensi = pathinfo($foto['name'], PATHINFO_EXTENSION);
-        $namaFile = uniqid('event_') . '.' . $ekstensi;
+        $ekstensi = strtolower(pathinfo($foto['name'], PATHINFO_EXTENSION));
+        $namaFile = uniqid('event_', true) . '.' . $ekstensi; // tambah entropy biar lebih unik
+        $namaFile = preg_replace('/[^a-zA-Z0-9_\.]/', '', $namaFile); // bersihkan karakter aneh dari uniqid(more_entropy)
 
         if (move_uploaded_file($foto['tmp_name'], $uploadDir . $namaFile)) {
             return ['success' => true, 'nama_file' => $namaFile];
@@ -238,8 +268,9 @@ class Event {
 
     // Helper - hapus foto lama dari server
     private function hapusFoto($namaFile) {
+        if (!$namaFile) return;
         $path = '../../uploads/event/' . $namaFile;
-        if ($namaFile && file_exists($path)) {
+        if (file_exists($path)) {
             unlink($path);
         }
     }

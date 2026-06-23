@@ -26,7 +26,8 @@ $(document).ready(function () {
 
     $('#btnSaveEvent').click(function () {
         var nama_event     = $('#namaEvent').val();
-        var kategori       = $('#kategori').val();
+        // Tambahkan || '' untuk memastikan nilainya string kosong jika belum dipilih (bukan null)
+        var kategori       = $('#kategori').val() || ''; 
         var tanggal_event  = $('#tanggalEvent').val();
         var waktu_mulai    = $('#waktuMulai').val();
         var waktu_selesai  = $('#waktuSelesai').val();
@@ -36,7 +37,7 @@ $(document).ready(function () {
         var foto           = $('#foto')[0].files[0];
 
         if (!nama_event)     { Swal.fire('Perhatian!', 'Nama event tidak boleh kosong!', 'warning'); return; }
-        if (!kategori)       { Swal.fire('Perhatian!', 'Kategori tidak boleh kosong!', 'warning'); return; }
+        if (!kategori)       { Swal.fire('Perhatian!', 'Kategori harus dipilih!', 'warning'); return; }
         if (!tanggal_event)  { Swal.fire('Perhatian!', 'Tanggal event harus diisi!', 'warning'); return; }
         if (!waktu_mulai)    { Swal.fire('Perhatian!', 'Waktu mulai harus diisi!', 'warning'); return; }
         if (!waktu_selesai)  { Swal.fire('Perhatian!', 'Waktu selesai harus diisi!', 'warning'); return; }
@@ -102,7 +103,8 @@ $(document).ready(function () {
 
                     $('#edit_id_event').val(item.mev_id_event);
                     $('#editNamaEvent').val(item.mev_nama_event);
-                    $('#editKategori').val(item.mev_kategori);
+                    // Pastikan #editKategori di HTML Modal Edit juga pakai <select>
+                    $('#editKategori').val(item.mev_kategori); 
                     $('#editTanggalEvent').val(item.mev_tanggal_event);
                     $('#editWaktuMulai').val(item.mev_waktu_mulai);
                     $('#editWaktuSelesai').val(item.mew_waktu_selesai);
@@ -112,10 +114,9 @@ $(document).ready(function () {
                     $('#editFotoLama').val(item.mev_foto);
 
                     var fotoSrc = item.mev_foto
-                        ? BASE_URL + '../uploads/event/' + item.mev_foto
+                        ? item.mev_foto
                         : BASE_URL + '../assets/img/placeholder.jpg';
                     $('#editPreviewFoto').attr('src', fotoSrc).show();
-
                     $('#modalEditEvent').modal('show');
 
                 } else {
@@ -132,7 +133,8 @@ $(document).ready(function () {
     $('#btnUpdateEvent').click(function () {
         var id             = $('#edit_id_event').val();
         var nama_event     = $('#editNamaEvent').val();
-        var kategori       = $('#editKategori').val();
+        // Tambahkan || '' di sini juga
+        var kategori       = $('#editKategori').val() || ''; 
         var tanggal_event  = $('#editTanggalEvent').val();
         var waktu_mulai    = $('#editWaktuMulai').val();
         var waktu_selesai  = $('#editWaktuSelesai').val();
@@ -143,7 +145,7 @@ $(document).ready(function () {
         var fotoLama       = $('#editFotoLama').val();
 
         if (!nama_event)     { Swal.fire('Perhatian!', 'Nama event tidak boleh kosong!', 'warning'); return; }
-        if (!kategori)       { Swal.fire('Perhatian!', 'Kategori tidak boleh kosong!', 'warning'); return; }
+        if (!kategori)       { Swal.fire('Perhatian!', 'Kategori harus dipilih!', 'warning'); return; }
         if (!tanggal_event)  { Swal.fire('Perhatian!', 'Tanggal event harus diisi!', 'warning'); return; }
         if (!waktu_mulai)    { Swal.fire('Perhatian!', 'Waktu mulai harus diisi!', 'warning'); return; }
         if (!waktu_selesai)  { Swal.fire('Perhatian!', 'Waktu selesai harus diisi!', 'warning'); return; }
@@ -330,7 +332,7 @@ function cariEvent(keyword, status) {
     });
 }
 
-// Helper - filter data by status di sisi client (karena backend belum punya parameter status)
+// Helper - filter data by status di sisi client
 function filterByStatus(data, status) {
     if (!status) return data;
     return data.filter(function (item) {
@@ -361,10 +363,9 @@ function renderTbody(data, keyword) {
             var kelasStatus = badgeStatus[item.mev_status] || 'bg-secondary text-white';
 
             var fotoSrc = item.mev_foto
-                ? BASE_URL + '../uploads/event/' + item.mev_foto
+                ? item.mev_foto
                 : BASE_URL + '../assets/img/placeholder.jpg';
 
-            // Highlight keyword pada kolom teks jika ada
             var nama     = hlKeyword(escHtml(item.mev_nama_event), keyword);
             var lokasi   = hlKeyword(escHtml(item.mev_lokasi   ?? '-'), keyword);
             var kategori = hlKeyword(escHtml(item.mev_kategori ?? '-'), keyword);
@@ -449,7 +450,6 @@ function loadCardEvent() {
     });
 }
 
-// Helper - format tanggal jadi "21 Jun 2026"
 function formatTanggal(tanggal) {
     var bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
     var d = new Date(tanggal);
@@ -457,7 +457,6 @@ function formatTanggal(tanggal) {
     return d.getDate() + ' ' + bulan[d.getMonth()] + ' ' + d.getFullYear();
 }
 
-// Helper - format jam "HH:MM:SS" jadi "HH:MM"
 function formatJam(jam) {
     return jam ? jam.substring(0, 5) : '-';
 }
@@ -468,12 +467,10 @@ function hlKeyword(teks, keyword) {
     return teks.replace(regex, '<mark class="p-0 bg-warning bg-opacity-50">$1</mark>');
 }
 
-// Helper — escape string HTML (cegah XSS)
 function escHtml(str) {
     return $('<div>').text(String(str ?? '')).html();
 }
 
-// Helper — escape karakter spesial untuk RegExp
 function escRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

@@ -18,12 +18,19 @@
                 <input type="text" class="form-control" name="namaEvent" id="namaEvent" required placeholder="Contoh: Festival Jazz Bromo">
               </div>
             </div>
-            <div class="col-lg-6">
-              <div class="mb-3">
-                <label class="form-label required">Kategori</label>
-                <input type="text" class="form-control" name="kategori" id="kategori" required placeholder="Contoh: Festival, Konser, Budaya">
-              </div>
+           <div class="col-lg-6">
+            <div class="mb-3">
+              <label class="form-label required">Kategori</label>
+              <select class="form-select" name="kategori" id="kategori" required>
+                <option value="" disabled selected>Pilih Kategori</option>
+                <option value="Festival">Festival</option>
+                <option value="Konser">Konser</option>
+                <option value="Budaya">Budaya</option>
+                <option value="Olahraga">Olahraga</option>
+                <option value="Pameran">Pameran</option>
+              </select>
             </div>
+          </div>
             <div class="col-lg-4">
               <div class="mb-3">
                 <label class="form-label required">Tanggal Event</label>

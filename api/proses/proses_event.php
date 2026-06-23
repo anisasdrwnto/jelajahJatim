@@ -3,6 +3,7 @@
 header('Content-Type: application/json');
 
 require_once '../koneksi.php';
+require_once '../config_cloudinary.php';
 
 class Event {
     private $db;
@@ -42,7 +43,7 @@ class Event {
                 ':createBy'     => $_SESSION['nama'] ?? 'System'
             ]);
         } catch (Throwable $e) {
-            // INSERT gagal -> hapus foto yang sudah keburu diupload, biar tidak jadi file yatim
+            // INSERT gagal -> hapus foto yang sudah keburu diupload ke Cloudinary
             $this->hapusFoto($namaFoto['nama_file']);
             throw $e;
         }
@@ -62,7 +63,6 @@ class Event {
     public function cariEvent($keyword) {
         $keyword = trim($keyword);
 
-        // Jika keyword kosong, kembalikan semua data
         if ($keyword === '') {
             return $this->ambilSemua();
         }
@@ -151,9 +151,7 @@ class Event {
             }
             $fotoFinal        = $uploadBaru['nama_file'];
             $fotoBaruDiupload = true;
-            // PENTING: foto lama BELUM dihapus di sini.
-            // Baru dihapus setelah UPDATE database berhasil (lihat di bawah),
-            // supaya kalau UPDATE gagal, foto lama tidak ikut hilang dan jadi data yatim.
+            // Foto lama BELUM dihapus di sini -> baru dihapus setelah UPDATE database berhasil
         }
 
         $stmt = $this->db->prepare(
@@ -184,20 +182,16 @@ class Event {
                 ':id'           => $id
             ]);
         } catch (Throwable $e) {
-            // UPDATE gagal -> hapus file baru yang sudah keburu diupload, biar tidak jadi sampah
             if ($fotoBaruDiupload) {
                 $this->hapusFoto($fotoFinal);
             }
             throw $e;
         }
 
-        // UPDATE sudah berhasil dieksekusi -> sekarang baru aman hapus foto lama dari disk
         if ($fotoBaruDiupload) {
             $this->hapusFoto($fotoLama);
         }
 
-        // CATATAN: rowCount() TIDAK dipakai sebagai penentu sukses/gagal,
-        // karena bisa bernilai 0 walau query valid (kalau semua nilai kebetulan identik).
         return ['success' => true, 'message' => 'Event wisata berhasil diperbarui!'];
     }
 
@@ -234,7 +228,7 @@ class Event {
         return 'EW' . str_pad($angkaBaru, 3, '0', STR_PAD_LEFT);
     }
 
-    // Helper - upload foto
+    // Helper - upload foto ke Cloudinary
     private function uploadFoto($foto) {
         if (!$foto || !isset($foto['tmp_name']) || $foto['error'] !== UPLOAD_ERR_OK) {
             return ['success' => false, 'message' => 'Foto event harus diupload!'];
@@ -242,12 +236,6 @@ class Event {
 
         $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
         $maxSize      = 2 * 1024 * 1024;
-        $uploadDir    = '../../uploads/event/';
-
-        if (!is_dir($uploadDir)) {
-            // Folder belum ada -> coba buat otomatis, biar tidak gagal upload karena ini
-            mkdir($uploadDir, 0775, true);
-        }
 
         if (!in_array($foto['type'], $allowedTypes)) {
             return ['success' => false, 'message' => 'Format foto tidak valid! Gunakan JPG atau PNG.'];
@@ -256,23 +244,94 @@ class Event {
             return ['success' => false, 'message' => 'Ukuran foto maksimal 2MB!'];
         }
 
-        $ekstensi = strtolower(pathinfo($foto['name'], PATHINFO_EXTENSION));
-        $namaFile = uniqid('event_', true) . '.' . $ekstensi; // tambah entropy biar lebih unik
-        $namaFile = preg_replace('/[^a-zA-Z0-9_\.]/', '', $namaFile); // bersihkan karakter aneh dari uniqid(more_entropy)
+        $folder    = 'jelajah_wisata/event';
+        $publicId  = preg_replace('/[^a-zA-Z0-9_]/', '', uniqid('event_', true));
+        $timestamp = time();
 
-        if (move_uploaded_file($foto['tmp_name'], $uploadDir . $namaFile)) {
-            return ['success' => true, 'nama_file' => $namaFile];
+        $paramsToSign = ['folder' => $folder, 'public_id' => $publicId, 'timestamp' => $timestamp];
+        ksort($paramsToSign);
+        $signatureString = '';
+        foreach ($paramsToSign as $key => $value) {
+            $signatureString .= $key . '=' . $value . '&';
         }
-        return ['success' => false, 'message' => 'Gagal menyimpan foto ke server!'];
+        $signatureString = rtrim($signatureString, '&') . CLOUDINARY_API_SECRET;
+        $signature = sha1($signatureString);
+
+        $url = 'https://api.cloudinary.com/v1_1/' . CLOUDINARY_CLOUD_NAME . '/image/upload';
+
+        $postFields = [
+            'file'      => new CURLFile($foto['tmp_name'], $foto['type'], $foto['name']),
+            'api_key'   => CLOUDINARY_API_KEY,
+            'timestamp' => $timestamp,
+            'signature' => $signature,
+            'folder'    => $folder,
+            'public_id' => $publicId,
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlErr  = curl_error($ch);
+        curl_close($ch);
+
+        if ($curlErr) {
+            return ['success' => false, 'message' => 'Gagal koneksi ke Cloudinary: ' . $curlErr];
+        }
+
+        $result = json_decode($response, true);
+
+        if ($httpCode !== 200 || empty($result['secure_url'])) {
+            $msg = $result['error']['message'] ?? 'Upload ke Cloudinary gagal!';
+            return ['success' => false, 'message' => $msg];
+        }
+
+        return [
+            'success'   => true,
+            'nama_file' => $result['secure_url'], // ini yang disimpan di kolom mev_foto
+            'public_id' => $result['public_id']
+        ];
     }
 
-    // Helper - hapus foto lama dari server
-    private function hapusFoto($namaFile) {
-        if (!$namaFile) return;
-        $path = '../../uploads/event/' . $namaFile;
-        if (file_exists($path)) {
-            unlink($path);
+    // Helper - hapus foto dari Cloudinary
+    private function hapusFoto($urlFoto) {
+        if (!$urlFoto) return;
+
+        $pattern = '#/upload/(?:v\d+/)?(.+)\.[a-zA-Z0-9]+$#';
+        if (!preg_match($pattern, $urlFoto, $matches)) {
+            return; // bukan URL Cloudinary yang valid, skip
         }
+        $publicId = $matches[1];
+
+        $timestamp    = time();
+        $paramsToSign = ['public_id' => $publicId, 'timestamp' => $timestamp];
+        ksort($paramsToSign);
+        $signatureString = '';
+        foreach ($paramsToSign as $key => $value) {
+            $signatureString .= $key . '=' . $value . '&';
+        }
+        $signatureString = rtrim($signatureString, '&') . CLOUDINARY_API_SECRET;
+        $signature = sha1($signatureString);
+
+        $url = 'https://api.cloudinary.com/v1_1/' . CLOUDINARY_CLOUD_NAME . '/image/destroy';
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, [
+            'public_id' => $publicId,
+            'api_key'   => CLOUDINARY_API_KEY,
+            'timestamp' => $timestamp,
+            'signature' => $signature,
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_exec($ch);
+        curl_close($ch);
     }
 }
 
@@ -288,8 +347,6 @@ if (empty($action)) {
 $event  = new Event($pdo);
 $result = [];
 
-// DEV_MODE: tampilkan pesan error PHP/PDO asli ke response JSON saat development.
-// Ubah ke false sebelum dipakai/deploy production, agar detail database tidak terekspos.
 define('DEV_MODE', false);
 
 try {

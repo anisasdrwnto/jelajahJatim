@@ -3,6 +3,7 @@
 header('Content-Type: application/json');
 
 require_once '../koneksi.php';
+require_once '../config_cloudinary.php';
 
 class Destinasi {
     private $db;
@@ -27,23 +28,26 @@ class Destinasi {
                 (:id, :nama, :kabkota, :wilayah, :kategori, :alamat, :deskripsi, :status, :foto, :createBy)"
         );
 
-        $statement->execute([
-            ':id'        => $id_Baru,
-            ':nama'      => $data['namaDestinasi'],
-            ':kabkota'   => $data['kabupatenKota'],
-            ':wilayah'   => $data['wilayah']   ?? null,
-            ':kategori'  => $data['kategori'],
-            ':alamat'    => $data['alamatLengkap'],
-            ':deskripsi' => $data['deskripsi'] ?? null,
-            ':status'    => $data['status'],
-            ':foto'      => $namaFoto['nama_file'],
-            ':createBy'  => $_SESSION['nama']  ?? 'System'
-        ]);
-
-        if ($statement->rowCount()) {
-            return ['success' => true, 'message' => 'Destinasi wisata berhasil ditambahkan!', 'id' => $id_Baru];
+        try {
+            $statement->execute([
+                ':id'        => $id_Baru,
+                ':nama'      => $data['namaDestinasi'],
+                ':kabkota'   => $data['kabupatenKota'],
+                ':wilayah'   => $data['wilayah']   ?? null,
+                ':kategori'  => $data['kategori'],
+                ':alamat'    => $data['alamatLengkap'],
+                ':deskripsi' => $data['deskripsi'] ?? null,
+                ':status'    => $data['status'],
+                ':foto'      => $namaFoto['nama_file'],
+                ':createBy'  => $_SESSION['nama']  ?? 'System'
+            ]);
+        } catch (Throwable $e) {
+            // INSERT gagal -> hapus foto yang sudah keburu diupload ke Cloudinary
+            $this->hapusFoto($namaFoto['nama_file']);
+            throw $e;
         }
-        return ['success' => false, 'message' => 'Gagal menambahkan destinasi wisata!'];
+
+        return ['success' => true, 'message' => 'Destinasi wisata berhasil ditambahkan!', 'id' => $id_Baru];
     }
 
     // Ambil semua destinasi
@@ -58,7 +62,6 @@ class Destinasi {
     public function cariDestinasi($keyword) {
         $keyword = trim($keyword);
 
-        // Jika keyword kosong, kembalikan semua data
         if ($keyword === '') {
             return $this->ambilSemua();
         }
@@ -138,15 +141,18 @@ class Destinasi {
             return ['success' => false, 'message' => 'Destinasi tidak ditemukan!'];
         }
 
-        $fotoFinal = $dataLama['data']['mdw_foto'];
+        $fotoLama         = $dataLama['data']['mdw_foto'];
+        $fotoFinal        = $fotoLama;
+        $fotoBaruDiupload = false;
 
         if ($foto && $foto['error'] === UPLOAD_ERR_OK) {
             $uploadBaru = $this->uploadFoto($foto);
             if (!$uploadBaru['success']) {
                 return $uploadBaru;
             }
-            $this->hapusFoto($fotoFinal);
-            $fotoFinal = $uploadBaru['nama_file'];
+            $fotoFinal        = $uploadBaru['nama_file'];
+            $fotoBaruDiupload = true;
+            // Foto lama BELUM dihapus -> baru dihapus setelah UPDATE berhasil
         }
 
         $stmt = $this->db->prepare(
@@ -162,22 +168,30 @@ class Destinasi {
             WHERE mdw_id_destinasi_wisata = :id"
         );
 
-        $stmt->execute([
-            ':nama'      => $data['namaDestinasi'],
-            ':kabkota'   => $data['kabupatenKota'],
-            ':wilayah'   => $data['wilayah']   ?? null,
-            ':kategori'  => $data['kategori'],
-            ':alamat'    => $data['alamatLengkap'],
-            ':deskripsi' => $data['deskripsi'] ?? null,
-            ':status'    => $data['status'],
-            ':foto'      => $fotoFinal,
-            ':id'        => $id
-        ]);
-
-        if ($stmt->rowCount()) {
-            return ['success' => true, 'message' => 'Destinasi wisata berhasil diperbarui!'];
+        try {
+            $stmt->execute([
+                ':nama'      => $data['namaDestinasi'],
+                ':kabkota'   => $data['kabupatenKota'],
+                ':wilayah'   => $data['wilayah']   ?? null,
+                ':kategori'  => $data['kategori'],
+                ':alamat'    => $data['alamatLengkap'],
+                ':deskripsi' => $data['deskripsi'] ?? null,
+                ':status'    => $data['status'],
+                ':foto'      => $fotoFinal,
+                ':id'        => $id
+            ]);
+        } catch (Throwable $e) {
+            if ($fotoBaruDiupload) {
+                $this->hapusFoto($fotoFinal);
+            }
+            throw $e;
         }
-        return ['success' => false, 'message' => 'Tidak ada perubahan data!'];
+
+        if ($fotoBaruDiupload) {
+            $this->hapusFoto($fotoLama);
+        }
+
+        return ['success' => true, 'message' => 'Destinasi wisata berhasil diperbarui!'];
     }
 
     // Hapus destinasi
@@ -213,11 +227,14 @@ class Destinasi {
         return 'DW' . str_pad($angkaBaru, 3, '0', STR_PAD_LEFT);
     }
 
-    // Helper - upload foto
+    // Helper - upload foto ke Cloudinary
     private function uploadFoto($foto) {
+        if (!$foto || !isset($foto['tmp_name']) || $foto['error'] !== UPLOAD_ERR_OK) {
+            return ['success' => false, 'message' => 'Foto destinasi harus diupload!'];
+        }
+
         $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
         $maxSize      = 2 * 1024 * 1024;
-        $uploadDir    = '../../uploads/destinasi/';
 
         if (!in_array($foto['type'], $allowedTypes)) {
             return ['success' => false, 'message' => 'Format foto tidak valid! Gunakan JPG atau PNG.'];
@@ -226,21 +243,94 @@ class Destinasi {
             return ['success' => false, 'message' => 'Ukuran foto maksimal 2MB!'];
         }
 
-        $ekstensi = pathinfo($foto['name'], PATHINFO_EXTENSION);
-        $namaFile = uniqid('des_') . '.' . $ekstensi;
+        $folder    = 'jelajah_wisata/destinasi'; // folder beda dari event, biar terpisah rapi
+        $publicId  = preg_replace('/[^a-zA-Z0-9_]/', '', uniqid('des_', true));
+        $timestamp = time();
 
-        if (move_uploaded_file($foto['tmp_name'], $uploadDir . $namaFile)) {
-            return ['success' => true, 'nama_file' => $namaFile];
+        $paramsToSign = ['folder' => $folder, 'public_id' => $publicId, 'timestamp' => $timestamp];
+        ksort($paramsToSign);
+        $signatureString = '';
+        foreach ($paramsToSign as $key => $value) {
+            $signatureString .= $key . '=' . $value . '&';
         }
-        return ['success' => false, 'message' => 'Gagal menyimpan foto ke server!'];
+        $signatureString = rtrim($signatureString, '&') . CLOUDINARY_API_SECRET;
+        $signature = sha1($signatureString);
+
+        $url = 'https://api.cloudinary.com/v1_1/' . CLOUDINARY_CLOUD_NAME . '/image/upload';
+
+        $postFields = [
+            'file'      => new CURLFile($foto['tmp_name'], $foto['type'], $foto['name']),
+            'api_key'   => CLOUDINARY_API_KEY,
+            'timestamp' => $timestamp,
+            'signature' => $signature,
+            'folder'    => $folder,
+            'public_id' => $publicId,
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlErr  = curl_error($ch);
+        curl_close($ch);
+
+        if ($curlErr) {
+            return ['success' => false, 'message' => 'Gagal koneksi ke Cloudinary: ' . $curlErr];
+        }
+
+        $result = json_decode($response, true);
+
+        if ($httpCode !== 200 || empty($result['secure_url'])) {
+            $msg = $result['error']['message'] ?? 'Upload ke Cloudinary gagal!';
+            return ['success' => false, 'message' => $msg];
+        }
+
+        return [
+            'success'   => true,
+            'nama_file' => $result['secure_url'], // ini yang disimpan di kolom mdw_foto
+            'public_id' => $result['public_id']
+        ];
     }
 
-    // Helper - hapus foto lama dari server
-    private function hapusFoto($namaFile) {
-        $path = '../../uploads/destinasi/' . $namaFile;
-        if ($namaFile && file_exists($path)) {
-            unlink($path);
+    // Helper - hapus foto dari Cloudinary
+    private function hapusFoto($urlFoto) {
+        if (!$urlFoto) return;
+
+        $pattern = '#/upload/(?:v\d+/)?(.+)\.[a-zA-Z0-9]+$#';
+        if (!preg_match($pattern, $urlFoto, $matches)) {
+            return;
         }
+        $publicId = $matches[1];
+
+        $timestamp    = time();
+        $paramsToSign = ['public_id' => $publicId, 'timestamp' => $timestamp];
+        ksort($paramsToSign);
+        $signatureString = '';
+        foreach ($paramsToSign as $key => $value) {
+            $signatureString .= $key . '=' . $value . '&';
+        }
+        $signatureString = rtrim($signatureString, '&') . CLOUDINARY_API_SECRET;
+        $signature = sha1($signatureString);
+
+        $url = 'https://api.cloudinary.com/v1_1/' . CLOUDINARY_CLOUD_NAME . '/image/destroy';
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, [
+            'public_id' => $publicId,
+            'api_key'   => CLOUDINARY_API_KEY,
+            'timestamp' => $timestamp,
+            'signature' => $signature,
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_exec($ch);
+        curl_close($ch);
     }
 }
 
@@ -256,60 +346,80 @@ if (empty($action)) {
 $destinasi = new Destinasi($pdo);
 $result    = [];
 
-switch ($action) {
+define('DEV_MODE', false);
 
-    case 'tambah':
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'message' => 'Method tidak valid!']);
-            exit;
-        }
-        if (empty($_POST['namaDestinasi']) || empty($_POST['kabupatenKota']) ||
-            empty($_POST['kategori'])      || empty($_POST['alamatLengkap'])) {
-            echo json_encode(['success' => false, 'message' => 'Field wajib tidak boleh kosong!']);
-            exit;
-        }
-        $result = $destinasi->tambahDestinasi($_POST, $_FILES['foto'] ?? null);
-        break;
+try {
 
-    case 'baca':
-        $id     = $_GET['id'] ?? null;
-        $result = $id ? $destinasi->ambilById($id) : $destinasi->ambilSemua();
-        break;
+    switch ($action) {
 
-    case 'cari':
-        $keyword = trim($_GET['q'] ?? '');
-        $result  = $destinasi->cariDestinasi($keyword);
-        break;
+        case 'tambah':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                echo json_encode(['success' => false, 'message' => 'Method tidak valid!']);
+                exit;
+            }
+            if (empty($_POST['namaDestinasi']) || empty($_POST['kabupatenKota']) ||
+                empty($_POST['kategori'])      || empty($_POST['alamatLengkap'])) {
+                echo json_encode(['success' => false, 'message' => 'Field wajib tidak boleh kosong!']);
+                exit;
+            }
+            $result = $destinasi->tambahDestinasi($_POST, $_FILES['foto'] ?? null);
+            break;
 
-    case 'edit':
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'message' => 'Method tidak valid!']);
-            exit;
-        }
-        $id = trim($_POST['id'] ?? '');
-        if (empty($id)) {
-            echo json_encode(['success' => false, 'message' => 'ID destinasi tidak ditemukan!']);
-            exit;
-        }
-        $result = $destinasi->editDestinasi($id, $_POST, $_FILES['foto'] ?? null);
-        break;
+        case 'baca':
+            $id     = $_GET['id'] ?? null;
+            $result = $id ? $destinasi->ambilById($id) : $destinasi->ambilSemua();
+            break;
 
-    case 'hapus':
-        $id = trim($_POST['id'] ?? '');
-        if (empty($id)) {
-            echo json_encode(['success' => false, 'message' => 'ID destinasi tidak ditemukan!']);
-            exit;
-        }
-        $result = $destinasi->hapusDestinasi($id);
-        break;
+        case 'cari':
+            $keyword = trim($_GET['q'] ?? '');
+            $result  = $destinasi->cariDestinasi($keyword);
+            break;
 
-    case 'statistik':
-        $result = $destinasi->ambilStatistik();
-        break;
+        case 'edit':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                echo json_encode(['success' => false, 'message' => 'Method tidak valid!']);
+                exit;
+            }
+            $id = trim($_POST['id'] ?? '');
+            if (empty($id)) {
+                echo json_encode(['success' => false, 'message' => 'ID destinasi tidak ditemukan!']);
+                exit;
+            }
+            $result = $destinasi->editDestinasi($id, $_POST, $_FILES['foto'] ?? null);
+            break;
 
-    default:
-        $result = ['success' => false, 'message' => 'Action tidak dikenal!'];
-        break;
+        case 'hapus':
+            $id = trim($_POST['id'] ?? '');
+            if (empty($id)) {
+                echo json_encode(['success' => false, 'message' => 'ID destinasi tidak ditemukan!']);
+                exit;
+            }
+            $result = $destinasi->hapusDestinasi($id);
+            break;
+
+        case 'statistik':
+            $result = $destinasi->ambilStatistik();
+            break;
+
+        default:
+            $result = ['success' => false, 'message' => 'Action tidak dikenal!'];
+            break;
+    }
+
+} catch (PDOException $e) {
+    $result = [
+        'success' => false,
+        'message' => DEV_MODE
+            ? 'Database error: ' . $e->getMessage()
+            : 'Terjadi kesalahan pada database. Silakan coba lagi nanti.'
+    ];
+} catch (Throwable $e) {
+    $result = [
+        'success' => false,
+        'message' => DEV_MODE
+            ? 'Server error: ' . $e->getMessage()
+            : 'Terjadi kesalahan pada server. Silakan coba lagi nanti.'
+    ];
 }
 
 echo json_encode($result);

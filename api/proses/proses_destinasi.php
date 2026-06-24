@@ -243,7 +243,7 @@ class Destinasi {
             return ['success' => false, 'message' => 'Ukuran foto maksimal 2MB!'];
         }
 
-        $folder    = 'jelajah_wisata/destinasi'; // folder beda dari event, biar terpisah rapi
+        $folder    = 'jelajah_wisata/destinasi'; 
         $publicId  = preg_replace('/[^a-zA-Z0-9_]/', '', uniqid('des_', true));
         $timestamp = time();
 
@@ -272,7 +272,9 @@ class Destinasi {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        
+        // MENGABAIKAN VERIFIKASI SSL AGAR LANCAR DI LOCALHOST MANAPUN
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -292,7 +294,7 @@ class Destinasi {
 
         return [
             'success'   => true,
-            'nama_file' => $result['secure_url'], // ini yang disimpan di kolom mdw_foto
+            'nama_file' => $result['secure_url'], 
             'public_id' => $result['public_id']
         ];
     }
@@ -329,6 +331,7 @@ class Destinasi {
             'signature' => $signature,
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Ditambahkan juga di proses hapus foto
         curl_exec($ch);
         curl_close($ch);
     }
@@ -346,7 +349,8 @@ if (empty($action)) {
 $destinasi = new Destinasi($pdo);
 $result    = [];
 
-define('DEV_MODE', false);
+// MODUS DEVELOPMENT AKTIF UNTUK MELIHAT ERROR JIKA ADA FITUR PHP LAPTOP YANG MATI
+define('DEV_MODE', true);
 
 try {
 

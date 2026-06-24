@@ -1,5 +1,9 @@
 <?php
 
+// 1. TAMBAHKAN INI: Sembunyikan pesan deprecated/warning dari output agar tidak merusak JSON AJAX
+ini_set('display_errors', 0);
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
+
 header('Content-Type: application/json');
 
 require_once '../koneksi.php';
@@ -279,7 +283,8 @@ class Destinasi {
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlErr  = curl_error($ch);
-        curl_close($ch);
+        
+        // PERBAIKAN: Baris curl_close($ch) yang memicu error di PHP 8.5+ telah Dihapus dari sini
 
         if ($curlErr) {
             return ['success' => false, 'message' => 'Gagal koneksi ke Cloudinary: ' . $curlErr];
@@ -331,9 +336,10 @@ class Destinasi {
             'signature' => $signature,
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Ditambahkan juga di proses hapus foto
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_exec($ch);
-        curl_close($ch);
+        
+        // PERBAIKAN: Baris curl_close($ch) yang memicu error di PHP 8.5+ telah Dihapus dari sini
     }
 }
 

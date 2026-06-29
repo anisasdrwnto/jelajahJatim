@@ -116,7 +116,10 @@ $(document).ready(function () {
                     $('#editKategori').val(item.mev_kategori); 
                     $('#editTanggalEvent').val(item.mev_tanggal_event);
                     $('#editWaktuMulai').val(item.mev_waktu_mulai);
-                    $('#editWaktuSelesai').val(item.mev_waktu_selesai);
+                    
+                    // PERBAIKAN DI SINI: mev_waktu_selesai diubah menjadi mew_waktu_selesai sesuai DB
+                    $('#editWaktuSelesai').val(item.mew_waktu_selesai);
+                    
                     $('#editLokasi').val(item.mev_lokasi);
                     $('#editStatus').val(item.mev_status);
                     $('#editDeskripsi').val(item.mev_deskripsi);
@@ -260,7 +263,7 @@ function cariEvent(keyword, status) {
         beforeSend: function () {
             $('#tbodyEvent').html(`
                 <tr>
-                    <td colspan="10" class="text-center py-4">
+                    <td colspan="11" class="text-center py-4">
                         <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
                         <span class="ms-2 text-muted">Mencari...</span>
                     </td>
@@ -305,7 +308,7 @@ function loadTableEvent() {
         beforeSend: function () {
             $('#tbodyEvent').html(`
                 <tr>
-                    <td colspan="10" class="text-center py-4">
+                    <td colspan="11" class="text-center py-4">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
@@ -335,7 +338,7 @@ function renderTbodyEvent(data, keyword) {
     if (data.length === 0) {
         tbody = `
             <tr>
-                <td colspan="10" class="text-center text-muted py-4">
+                <td colspan="11" class="text-center text-muted py-4">
                     <i class="ti ti-calendar-off fs-2 d-block mb-2"></i>
                     ${keyword ? 'Tidak ada hasil untuk "<strong>' + escHtmlEvent(keyword) + '</strong>"' : 'Belum ada data event'}
                 </td>
@@ -352,15 +355,14 @@ function renderTbodyEvent(data, keyword) {
             var kelasKategori = badgeKategori[item.mev_kategori] || 'bg-secondary text-white';
 
             var badgeStatus = {
-                'Aktif'     : 'bg-success text-white',
-                'Nonaktif'  : 'bg-secondary text-white',
-                'Selesai'   : 'bg-dark text-white'
+                'Aktif'   : 'bg-success text-white',
+                'Selesai' : 'bg-info text-white',
+                'Batal'   : 'bg-danger text-white'
             };
             var kelasStatus = badgeStatus[item.mev_status] || 'bg-secondary text-white';
 
             var fotoSrc = getFotoUrlEvent(item.mev_foto);
 
-            // Highlight keyword pada kolom teks jika ada pencarian
             var nama     = hlKeywordEvent(escHtmlEvent(item.mev_nama_event), keyword);
             var kategori = hlKeywordEvent(escHtmlEvent(item.mev_kategori ?? '-'), keyword);
             var lokasi   = hlKeywordEvent(escHtmlEvent(item.mev_lokasi ?? '-'), keyword);
@@ -369,15 +371,20 @@ function renderTbodyEvent(data, keyword) {
                 <tr>
                     <td class="text-center">${item.mev_id_event}</td>
                     <td><div class="fw-bold">${nama}</div></td>
-                    <td class="d-none d-md-table-cell">${kategori}</td>
                     <td class="d-none d-lg-table-cell">${item.mev_tanggal_event}</td>
-                    <td class="d-none d-lg-table-cell">${item.mev_waktu_mulai} - ${item.mev_waktu_selesai}</td>
+                    
+                    <!-- PERBAIKAN DI SINI: mev_waktu_selesai diubah menjadi mew_waktu_selesai -->
+                    <td class="d-none d-lg-table-cell">${item.mev_waktu_mulai} - ${item.mew_waktu_selesai}</td>
+                    
                     <td class="d-none d-lg-table-cell">${lokasi}</td>
                     <td class="w-1">
                         <img src="${fotoSrc}" alt="Foto Event" 
                              width="60" height="60" 
                              style="object-fit:cover; border-radius:6px;"
                              onerror="this.src='${BASE_URL}../assets/img/placeholder.jpg'">
+                    </td>
+                    <td class="d-none d-md-table-cell">
+                        <span class="badge ${kelasKategori}">${kategori}</span>
                     </td>
                     <td class="d-none d-sm-table-cell" style="max-width: 150px;">
                         <span class="d-inline-block text-truncate" style="max-width: 140px;" 
@@ -392,24 +399,13 @@ function renderTbodyEvent(data, keyword) {
                         <button class="btn btn-sm btn-warning me-1 btnEditEvent" 
                                 data-id="${item.mev_id_event}" 
                                 title="Edit">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-edit" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
-                                <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" />
-                            </svg>
+                            <i class="ti ti-edit fs-4"></i>
                         </button>
                         <button class="btn btn-sm btn-danger btnHapusEvent" 
                                 data-id="${item.mev_id_event}" 
                                 data-nama="${escHtmlEvent(item.mev_nama_event)}"
                                 title="Hapus">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                <line x1="4" y1="7" x2="20" y2="7" />
-                                <line x1="10" y1="11" x2="10" y2="17" />
-                                <line x1="14" y1="11" x2="14" y2="17" />
-                                <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
-                                <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
-                            </svg>
+                            <i class="ti ti-trash fs-4"></i>
                         </button>
                     </td>
                 </tr>
@@ -429,10 +425,10 @@ function loadCardEvent() {
         success  : function (response) {
             if (response.success == true) {
                 var data = response.data;
-                $('#cardTotalEvent').text(data.total);
-                $('#cardAktifEvent').text(data.aktif);
-                $('#cardNonaktifEvent').text(data.nonaktif);
-                $('#cardKategoriEvent').text(data.total_kategori);
+                $('#cardTotalEvent').text(data.total ?? 0);
+                $('#cardAktif').text(data.aktif ?? 0);
+                $('#cardSelesai').text(data.selesai ?? 0);
+                $('#cardBatal').text(data.batal ?? 0);
             }
         },
         error: function (xhr) {

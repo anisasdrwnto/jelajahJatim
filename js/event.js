@@ -14,19 +14,29 @@ $(document).ready(function () {
     var debounceTimer = null;
 
     $('#search-event').on('input', function () {
+        var keyword = $(this).val().trim();
+        var status  = $('#filter-status').val();
+
         clearTimeout(debounceTimer);
+
         debounceTimer = setTimeout(function () {
-            loadTableEvent();
+            cariEvent(keyword, status);
         }, 350);
     });
 
     $('#filter-status').on('change', function () {
-        loadTableEvent();
+        var keyword = $('#search-event').val().trim();
+        var status  = $(this).val();
+        
+        if (keyword !== '') {
+            cariEvent(keyword, status);
+        } else {
+            loadTableEvent();
+        }
     });
 
     $('#btnSaveEvent').click(function () {
         var nama_event     = $('#namaEvent').val();
-        // Tambahkan || '' untuk memastikan nilainya string kosong jika belum dipilih (bukan null)
         var kategori       = $('#kategori').val() || ''; 
         var tanggal_event  = $('#tanggalEvent').val();
         var waktu_mulai    = $('#waktuMulai').val();
@@ -103,20 +113,16 @@ $(document).ready(function () {
 
                     $('#edit_id_event').val(item.mev_id_event);
                     $('#editNamaEvent').val(item.mev_nama_event);
-                    // Pastikan #editKategori di HTML Modal Edit juga pakai <select>
                     $('#editKategori').val(item.mev_kategori); 
                     $('#editTanggalEvent').val(item.mev_tanggal_event);
                     $('#editWaktuMulai').val(item.mev_waktu_mulai);
-                    $('#editWaktuSelesai').val(item.mew_waktu_selesai);
+                    $('#editWaktuSelesai').val(item.mev_waktu_selesai);
                     $('#editLokasi').val(item.mev_lokasi);
                     $('#editStatus').val(item.mev_status);
                     $('#editDeskripsi').val(item.mev_deskripsi);
                     $('#editFotoLama').val(item.mev_foto);
 
-                    var fotoSrc = item.mev_foto
-                        ? item.mev_foto
-                        : BASE_URL + '../assets/img/placeholder.jpg';
-                    $('#editPreviewFoto').attr('src', fotoSrc).show();
+                    $('#editPreviewFoto').attr('src', getFotoUrlEvent(item.mev_foto)).show();
                     $('#modalEditEvent').modal('show');
 
                 } else {
@@ -133,7 +139,6 @@ $(document).ready(function () {
     $('#btnUpdateEvent').click(function () {
         var id             = $('#edit_id_event').val();
         var nama_event     = $('#editNamaEvent').val();
-        // Tambahkan || '' di sini juga
         var kategori       = $('#editKategori').val() || ''; 
         var tanggal_event  = $('#editTanggalEvent').val();
         var waktu_mulai    = $('#editWaktuMulai').val();
@@ -244,9 +249,44 @@ $(document).ready(function () {
             }
         });
     });
-
 });
 
+function cariEvent(keyword, status) {
+    $.ajax({
+        url      : BASE_URL + 'proses/proses_event.php',
+        type     : 'GET',
+        dataType : 'json',
+        data     : { action: 'cari', q: keyword, status: status },
+        beforeSend: function () {
+            $('#tbodyEvent').html(`
+                <tr>
+                    <td colspan="10" class="text-center py-4">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span class="ms-2 text-muted">Mencari...</span>
+                    </td>
+                </tr>
+            `);
+        },
+        success: function (response) {
+            if (response.success == true) {
+                if (keyword !== '') {
+                    $('#labelHasilSearch')
+                        .html(`Menampilkan <strong>${response.total}</strong> hasil untuk "<em>${escHtmlEvent(keyword)}</em>"`)
+                        .show();
+                } else {
+                    $('#labelHasilSearch').hide();
+                }
+                renderTbodyEvent(response.data, keyword);
+            } else {
+                Swal.fire('Gagal!', response.message, 'error');
+            }
+        },
+        error: function (xhr) {
+            Swal.fire('Error!', 'Gagal melakukan pencarian!', 'error');
+            console.error('AJAX Error:', xhr.responseText);
+        }
+    });
+}
 
 function loadTableEvent() {
     var keyword = $('#search-event').val().trim();
@@ -261,7 +301,7 @@ function loadTableEvent() {
         url      : BASE_URL + 'proses/proses_event.php',
         type     : 'GET',
         dataType : 'json',
-        data     : { action: 'baca' },
+        data     : { action: 'baca', status: status },
         beforeSend: function () {
             $('#tbodyEvent').html(`
                 <tr>
@@ -277,7 +317,7 @@ function loadTableEvent() {
         success: function (response) {
             if (response.success == true) {
                 $('#labelHasilSearch').hide();
-                renderTbody(filterByStatus(response.data, status), '');
+                renderTbodyEvent(response.data, '');
             } else {
                 Swal.fire('Gagal!', response.message, 'error');
             }
@@ -289,58 +329,7 @@ function loadTableEvent() {
     });
 }
 
-function cariEvent(keyword, status) {
-    $.ajax({
-        url      : BASE_URL + 'proses/proses_event.php',
-        type     : 'GET',
-        dataType : 'json',
-        data     : { action: 'cari', q: keyword },
-
-        beforeSend: function () {
-            $('#tbodyEvent').html(`
-                <tr>
-                    <td colspan="10" class="text-center py-4">
-                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                        <span class="ms-2 text-muted">Mencari...</span>
-                    </td>
-                </tr>
-            `);
-        },
-
-        success: function (response) {
-            if (response.success == true) {
-                var data = filterByStatus(response.data, status);
-
-                if (keyword !== '') {
-                    $('#labelHasilSearch')
-                        .html(`Menampilkan <strong>${data.length}</strong> hasil untuk "<em>${escHtml(keyword)}</em>"`)
-                        .show();
-                } else {
-                    $('#labelHasilSearch').hide();
-                }
-
-                renderTbody(data, keyword);
-            } else {
-                Swal.fire('Gagal!', response.message, 'error');
-            }
-        },
-
-        error: function (xhr) {
-            Swal.fire('Error!', 'Gagal melakukan pencarian!', 'error');
-            console.error('AJAX Error:', xhr.responseText);
-        }
-    });
-}
-
-// Helper - filter data by status di sisi client
-function filterByStatus(data, status) {
-    if (!status) return data;
-    return data.filter(function (item) {
-        return item.mev_status === status;
-    });
-}
-
-function renderTbody(data, keyword) {
+function renderTbodyEvent(data, keyword) {
     var tbody = '';
 
     if (data.length === 0) {
@@ -348,58 +337,60 @@ function renderTbody(data, keyword) {
             <tr>
                 <td colspan="10" class="text-center text-muted py-4">
                     <i class="ti ti-calendar-off fs-2 d-block mb-2"></i>
-                    ${keyword ? 'Tidak ada hasil untuk "<strong>' + escHtml(keyword) + '</strong>"' : 'Belum ada data event wisata'}
+                    ${keyword ? 'Tidak ada hasil untuk "<strong>' + escHtmlEvent(keyword) + '</strong>"' : 'Belum ada data event'}
                 </td>
             </tr>
         `;
     } else {
         $.each(data, function (index, item) {
+            var badgeKategori = {
+                'Festival' : 'bg-primary text-white',
+                'Budaya'   : 'bg-warning text-white',
+                'Musik'    : 'bg-danger text-white',
+                'Olahraga' : 'bg-info text-white'
+            };
+            var kelasKategori = badgeKategori[item.mev_kategori] || 'bg-secondary text-white';
 
             var badgeStatus = {
-                'Aktif'   : 'bg-success text-white',
-                'Selesai' : 'bg-info text-white',
-                'Batal'   : 'bg-danger text-white'
+                'Aktif'     : 'bg-success text-white',
+                'Nonaktif'  : 'bg-secondary text-white',
+                'Selesai'   : 'bg-dark text-white'
             };
             var kelasStatus = badgeStatus[item.mev_status] || 'bg-secondary text-white';
 
-            var fotoSrc = item.mev_foto
-                ? item.mev_foto
-                : BASE_URL + '../assets/img/placeholder.jpg';
+            var fotoSrc = getFotoUrlEvent(item.mev_foto);
 
-            var nama     = hlKeyword(escHtml(item.mev_nama_event), keyword);
-            var lokasi   = hlKeyword(escHtml(item.mev_lokasi   ?? '-'), keyword);
-            var kategori = hlKeyword(escHtml(item.mev_kategori ?? '-'), keyword);
-
-            var tanggal = item.mev_tanggal_event ? formatTanggal(item.mev_tanggal_event) : '-';
-            var waktu   = (item.mev_waktu_mulai && item.mew_waktu_selesai)
-                ? formatJam(item.mev_waktu_mulai) + ' - ' + formatJam(item.mew_waktu_selesai)
-                : '-';
+            // Highlight keyword pada kolom teks jika ada pencarian
+            var nama     = hlKeywordEvent(escHtmlEvent(item.mev_nama_event), keyword);
+            var kategori = hlKeywordEvent(escHtmlEvent(item.mev_kategori ?? '-'), keyword);
+            var lokasi   = hlKeywordEvent(escHtmlEvent(item.mev_lokasi ?? '-'), keyword);
 
             tbody += `
                 <tr>
                     <td class="text-center">${item.mev_id_event}</td>
                     <td><div class="fw-bold">${nama}</div></td>
-                    <td class="d-none d-lg-table-cell">${tanggal}</td>
-                    <td class="d-none d-lg-table-cell">${waktu}</td>
+                    <td class="d-none d-md-table-cell">${kategori}</td>
+                    <td class="d-none d-lg-table-cell">${item.mev_tanggal_event}</td>
+                    <td class="d-none d-lg-table-cell">${item.mev_waktu_mulai} - ${item.mev_waktu_selesai}</td>
                     <td class="d-none d-lg-table-cell">${lokasi}</td>
                     <td class="w-1">
-                        <img src="${fotoSrc}" alt="Foto Event"
-                             width="60" height="60"
-                             style="object-fit:cover; border-radius:6px;">
+                        <img src="${fotoSrc}" alt="Foto Event" 
+                             width="60" height="60" 
+                             style="object-fit:cover; border-radius:6px;"
+                             onerror="this.src='${BASE_URL}../assets/img/placeholder.jpg'">
                     </td>
-                    <td class="d-none d-md-table-cell">${kategori}</td>
                     <td class="d-none d-sm-table-cell" style="max-width: 150px;">
-                        <span class="d-inline-block text-truncate" style="max-width: 140px;"
-                              title="${escHtml(item.mev_deskripsi ?? '-')}">
-                            ${escHtml(item.mev_deskripsi ?? '-')}
+                        <span class="d-inline-block text-truncate" style="max-width: 140px;" 
+                              title="${escHtmlEvent(item.mev_deskripsi ?? '-')}">
+                            ${escHtmlEvent(item.mev_deskripsi ?? '-')}
                         </span>
                     </td>
                     <td>
                         <span class="badge ${kelasStatus}">${item.mev_status ?? '-'}</span>
                     </td>
                     <td class="text-end text-nowrap">
-                        <button class="btn btn-sm btn-warning me-1 btnEditEvent"
-                                data-id="${item.mev_id_event}"
+                        <button class="btn btn-sm btn-warning me-1 btnEditEvent" 
+                                data-id="${item.mev_id_event}" 
                                 title="Edit">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-edit" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -407,9 +398,9 @@ function renderTbody(data, keyword) {
                                 <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" />
                             </svg>
                         </button>
-                        <button class="btn btn-sm btn-danger btnHapusEvent"
-                                data-id="${item.mev_id_event}"
-                                data-nama="${escHtml(item.mev_nama_event)}"
+                        <button class="btn btn-sm btn-danger btnHapusEvent" 
+                                data-id="${item.mev_id_event}" 
+                                data-nama="${escHtmlEvent(item.mev_nama_event)}"
                                 title="Hapus">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -439,9 +430,9 @@ function loadCardEvent() {
             if (response.success == true) {
                 var data = response.data;
                 $('#cardTotalEvent').text(data.total);
-                $('#cardAktif').text(data.aktif);
-                $('#cardSelesai').text(data.selesai);
-                $('#cardBatal').text(data.batal);
+                $('#cardAktifEvent').text(data.aktif);
+                $('#cardNonaktifEvent').text(data.nonaktif);
+                $('#cardKategoriEvent').text(data.total_kategori);
             }
         },
         error: function (xhr) {
@@ -450,27 +441,26 @@ function loadCardEvent() {
     });
 }
 
-function formatTanggal(tanggal) {
-    var bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-    var d = new Date(tanggal);
-    if (isNaN(d.getTime())) return tanggal;
-    return d.getDate() + ' ' + bulan[d.getMonth()] + ' ' + d.getFullYear();
+function getFotoUrlEvent(foto) {
+    if (!foto) {
+        return BASE_URL + '../assets/img/placeholder.jpg';
+    }
+    if (foto.startsWith('http://') || foto.startsWith('https://')) {
+        return foto; 
+    }
+    return BASE_URL + '../uploads/event/' + foto;
 }
 
-function formatJam(jam) {
-    return jam ? jam.substring(0, 5) : '-';
-}
-
-function hlKeyword(teks, keyword) {
+function hlKeywordEvent(teks, keyword) {
     if (!keyword) return teks;
-    var regex = new RegExp('(' + escRegex(keyword) + ')', 'gi');
+    var regex = new RegExp('(' + escRegexEvent(keyword) + ')', 'gi');
     return teks.replace(regex, '<mark class="p-0 bg-warning bg-opacity-50">$1</mark>');
 }
 
-function escHtml(str) {
+function escHtmlEvent(str) {
     return $('<div>').text(String(str ?? '')).html();
 }
 
-function escRegex(str) {
+function escRegexEvent(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

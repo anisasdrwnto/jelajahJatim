@@ -1,4 +1,6 @@
 <?php
+// 1. Session start harus di paling atas agar $_SESSION bisa diakses di dalam class
+session_start();
 
 header('Content-Type: application/json');
 
@@ -39,11 +41,10 @@ class Event {
                 ':kategori'     => $data['kategori'],
                 ':deskripsi'    => $data['deskripsi'] ?? null,
                 ':foto'         => $namaFoto['nama_file'],
-                ':status'       => $data['status'],
+                ':status'       => $data['status'] ?? 'Aktif',
                 ':createBy'     => $_SESSION['nama'] ?? 'System'
             ]);
         } catch (Throwable $e) {
-            // INSERT gagal -> hapus foto yang sudah keburu diupload ke Cloudinary
             $this->hapusFoto($namaFoto['nama_file']);
             throw $e;
         }
@@ -151,7 +152,6 @@ class Event {
             }
             $fotoFinal        = $uploadBaru['nama_file'];
             $fotoBaruDiupload = true;
-            // Foto lama BELUM dihapus di sini -> baru dihapus setelah UPDATE database berhasil
         }
 
         $stmt = $this->db->prepare(
@@ -273,12 +273,15 @@ class Event {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        
+        // PERBAIKAN: Diubah ke false agar tidak error SSL saat testing di komputer lokal (XAMPP)
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlErr  = curl_error($ch);
-        curl_close($ch);
+        
+        // PERBAIKAN PHP 8.5: Menghapus curl_close($ch) karena sudah otomatis/deprecated
 
         if ($curlErr) {
             return ['success' => false, 'message' => 'Gagal koneksi ke Cloudinary: ' . $curlErr];
@@ -293,7 +296,7 @@ class Event {
 
         return [
             'success'   => true,
-            'nama_file' => $result['secure_url'], // ini yang disimpan di kolom mev_foto
+            'nama_file' => $result['secure_url'],
             'public_id' => $result['public_id']
         ];
     }
@@ -304,7 +307,7 @@ class Event {
 
         $pattern = '#/upload/(?:v\d+/)?(.+)\.[a-zA-Z0-9]+$#';
         if (!preg_match($pattern, $urlFoto, $matches)) {
-            return; // bukan URL Cloudinary yang valid, skip
+            return;
         }
         $publicId = $matches[1];
 
@@ -330,12 +333,14 @@ class Event {
             'signature' => $signature,
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        
+        // PERBAIKAN: Diubah ke false juga di fungsi hapus agar sinkron di lokal
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
+        
         curl_exec($ch);
-        curl_close($ch);
+        // PERBAIKAN PHP 8.5: Menghapus curl_close($ch)
     }
 }
-
-session_start();
 
 $action = trim($_POST['action'] ?? $_GET['action'] ?? '');
 
@@ -347,12 +352,10 @@ if (empty($action)) {
 $event  = new Event($pdo);
 $result = [];
 
-define('DEV_MODE', false);
+define('DEV_MODE', true); 
 
 try {
-
     switch ($action) {
-
         case 'tambah':
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                 echo json_encode(['success' => false, 'message' => 'Method tidak valid!']);

@@ -300,12 +300,12 @@ define('DEV_MODE', true);
 try {
     switch ($action) {
         case 'tambah':
-            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['success' => false, 'message' => 'Method tidak valid!']); exit; }
-            if (!isset($_SESSION['user_id'])) { echo json_encode(['success' => false, 'message' => 'Anda harus login untuk menulis ulasan.']); exit; }
-            $payload = $_POST;
-            $payload['user_id'] = $_SESSION['user_id'];
-            $result = $ulasan->tambahUlasan($payload, $_FILES['foto'] ?? null);
-            break;
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['success' => false, 'message' => 'Method tidak valid!']); exit; }
+        if (!isset($_SESSION['mus_id_users'])) { echo json_encode(['success' => false, 'message' => 'Anda harus login untuk menulis ulasan.']); exit; }
+        $payload = $_POST;
+        $payload['user_id'] = $_SESSION['mus_id_users'];
+        $result = $ulasan->tambahUlasan($payload, $_FILES['foto'] ?? null);
+        break;
         case 'baca_publik':
             $destinasiId = $_GET['destinasi_id'] ?? '';
             if (empty($destinasiId)) { echo json_encode(['success' => false, 'message' => 'ID destinasi tidak ditemukan!']); exit; }

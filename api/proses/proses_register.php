@@ -91,10 +91,11 @@ $userId = $user->register($nama, $email, $password);
 
 if($userId){
     session_start();
-    $_SESSION['user_id'] = $userId;
-    $_SESSION['nama']    = $nama;
-    $_SESSION['role']    = 'USR';
-    echo json_encode(true);
+    $_SESSION['mus_id_users'] = $userId;
+    $_SESSION['mus_name']     = $nama;
+    $_SESSION['mus_email']    = $email;
+    $_SESSION['role']         = 'USR';
+    echo json_encode(['success' => true, 'message' => 'Registrasi berhasil!']);
 }else{
     echo json_encode(['success' => false, 'message' => 'Gagal membuat akun!']);
 }

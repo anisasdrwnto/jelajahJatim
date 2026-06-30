@@ -178,15 +178,15 @@ switch ($action) {
         break;
 
     case 'pesan': // dipanggil oleh form #formPesanTiket (POST)
-        if (!isset($_SESSION['user_id'])) {
-            echo json_encode(['success' => false, 'message' => 'Anda harus login untuk memesan tiket.']);
-            break;
-        }
-        $payload = $_POST;
-        $payload['user_id']      = $_SESSION['user_id'];
-        $payload['nama_pemesan'] = $payload['nama_pemesan'] ?? ($_SESSION['nama'] ?? null);
-        echo json_encode($tiket->pesanTiket($payload));
+    if (!isset($_SESSION['mus_id_users'])) {
+        echo json_encode(['success' => false, 'message' => 'Anda harus login untuk memesan tiket.']);
         break;
+    }
+    $payload = $_POST;
+    $payload['user_id']      = $_SESSION['mus_id_users'];
+    $payload['nama_pemesan'] = $payload['nama_pemesan'] ?? ($_SESSION['mus_name'] ?? null);
+    echo json_encode($tiket->pesanTiket($payload));
+    break;
 
     case 'verifikasi': // dipanggil dari dashboard admin
         echo json_encode($tiket->verifikasiPembayaran($_POST['id_booking'] ?? ''));

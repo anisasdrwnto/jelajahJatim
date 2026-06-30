@@ -43,7 +43,7 @@ class Destinasi {
                 ':deskripsi' => $data['deskripsi'] ?? null,
                 ':status'    => $data['status'],
                 ':foto'      => $namaFoto['nama_file'],
-                ':createBy'  => $_SESSION['nama']  ?? 'System'
+                ':createBy' => $_SESSION['mus_name'] ?? 'System'
             ]);
         } catch (Throwable $e) {
             // INSERT gagal -> hapus foto yang sudah keburu diupload ke Cloudinary

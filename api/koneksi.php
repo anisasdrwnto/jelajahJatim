@@ -1,4 +1,5 @@
 <?php 
+// trigger rebuild
 // Buat koneksi ke database TIDB
 $host     = "gateway01.ap-southeast-1.prod.alicloud.tidbcloud.com";
 $username = "3ZRN5c6PUXtTqvf.root";

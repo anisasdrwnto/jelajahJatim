@@ -23,7 +23,13 @@
             <div class="col-lg-6">
               <div class="mb-3">
                 <label class="form-label required">Kategori</label>
-                <input type="text" class="form-control" id="editKategori" name="kategori" required placeholder="Contoh: Festival, Konser, Budaya">
+                <select class="form-select" id="editKategori" name="kategori" required>
+                  <option value="" disabled selected>Pilih Kategori...</option>
+                  <option value="Konser">Konser</option>
+                  <option value="Budaya">Budaya</option>
+                  <option value="Olahraga">Olahraga</option>
+                  <option value="Festival">Festival</option>
+                </select>
               </div>
             </div>
             <div class="col-lg-4">
@@ -46,8 +52,10 @@
             </div>
             <div class="col-lg-6">
               <div class="mb-3">
-                <label class="form-label required">Lokasi</label>
-                <input type="text" class="form-control" id="editLokasi" name="lokasi" required>
+                <label class="form-label required">Lokasi (Kabupaten/Kota)</label>
+                <select class="form-select" name="lokasi" id="editLokasiEvent" required>
+                  <option value="" disabled>Memuat data lokasi...</option>
+                </select>
               </div>
             </div>
             <div class="col-lg-6">

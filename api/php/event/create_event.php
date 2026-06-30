@@ -49,10 +49,12 @@
                 <input type="time" class="form-control" name="waktuSelesai" id="waktuSelesai" required>
               </div>
             </div>
-            <div class="col-lg-6">
+           <div class="col-lg-6">
               <div class="mb-3">
-                <label class="form-label required">Lokasi</label>
-                <input type="text" class="form-control" name="lokasi" id="lokasi" required placeholder="Contoh: Kawasan Gunung Bromo">
+                <label class="form-label required">Lokasi (Kabupaten/Kota)</label>
+                <select class="form-select" name="lokasi" id="lokasiEvent" required>
+                  <option value="" disabled selected>Memuat data lokasi...</option>
+                </select>
               </div>
             </div>
             <div class="col-lg-6">

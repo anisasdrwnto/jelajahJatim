@@ -23,13 +23,15 @@
             <div class="col-lg-6">
               <div class="mb-3">
                 <label class="form-label required">Kabupaten/Kota</label>
-                <input type="text" class="form-control" id="editKabupatenKota" name="kabupatenKota" required>
+                <select class="form-select" id="editKabupatenKota" name="kabupatenKota" required>
+                  <option value="" disabled selected>Memuat data...</option>
+                </select>
               </div>
             </div>
             <div class="col-lg-6">
               <div class="mb-3">
                 <label class="form-label">Wilayah</label>
-                <input type="text" class="form-control" id="editWilayah" name="wilayah">
+                <input type="text" class="form-control" id="editWilayah" name="wilayah" disabled>
               </div>
             </div>
             <div class="col-lg-6">

@@ -1,462 +1,246 @@
 $(document).ready(function () {
-    // Panggil saat halaman pertama kali dibuka
+    // 1. Inisialisasi awal
     loadTableEvent();
     loadCardEvent();
+    loadLokasiDropdown();
 
-    // Reset form saat modal tambah terbuka
+    // 2. Event Listeners
     $('#modalAddEvent').on('show.bs.modal', function () {
-        var form = $('#formAddEvent');
-        if (form.length > 0) {
-            form[0].reset();
-        }
+        $('#formAddEvent')[0].reset();
+        $('#lokasiEvent').val('').trigger('change');
     });
-
-    var debounceTimer = null;
 
     $('#search-event').on('input', function () {
         var keyword = $(this).val().trim();
-        var status  = $('#filter-status').val();
-
-        clearTimeout(debounceTimer);
-
-        debounceTimer = setTimeout(function () {
-            cariEvent(keyword, status);
-        }, 350);
+        var status = $('#filter-status').val();
+        clearTimeout(window.debounceTimer);
+        window.debounceTimer = setTimeout(() => cariEvent(keyword, status), 350);
     });
 
     $('#filter-status').on('change', function () {
-        var keyword = $('#search-event').val().trim();
-        var status  = $(this).val();
-        
-        if (keyword !== '') {
-            cariEvent(keyword, status);
-        } else {
-            loadTableEvent();
-        }
+        cariEvent($('#search-event').val().trim(), $(this).val());
     });
 
+    // Simpan Event (Tambah)
     $('#btnSaveEvent').click(function () {
-        var nama_event     = $('#namaEvent').val();
-        var kategori       = $('#kategori').val() || ''; 
-        var tanggal_event  = $('#tanggalEvent').val();
-        var waktu_mulai    = $('#waktuMulai').val();
-        var waktu_selesai  = $('#waktuSelesai').val();
-        var lokasi         = $('#lokasi').val();
-        var status         = $('#status').val();
-        var deskripsi      = $('#deskripsi').val();
-        var foto           = $('#foto')[0].files[0];
+        if (!validateForm($('#formAddEvent'))) return;
 
-        if (!nama_event)     { Swal.fire('Perhatian!', 'Nama event tidak boleh kosong!', 'warning'); return; }
-        if (!kategori)       { Swal.fire('Perhatian!', 'Kategori harus dipilih!', 'warning'); return; }
-        if (!tanggal_event)  { Swal.fire('Perhatian!', 'Tanggal event harus diisi!', 'warning'); return; }
-        if (!waktu_mulai)    { Swal.fire('Perhatian!', 'Waktu mulai harus diisi!', 'warning'); return; }
-        if (!waktu_selesai)  { Swal.fire('Perhatian!', 'Waktu selesai harus diisi!', 'warning'); return; }
-        if (waktu_selesai <= waktu_mulai) { Swal.fire('Perhatian!', 'Waktu selesai harus setelah waktu mulai!', 'warning'); return; }
-        if (!lokasi)         { Swal.fire('Perhatian!', 'Lokasi tidak boleh kosong!', 'warning'); return; }
-        if (!foto)           { Swal.fire('Perhatian!', 'Foto event harus diupload!', 'warning'); return; }
-
-        var formData = new FormData();
-        formData.append('action',       'tambah');
-        formData.append('namaEvent',    nama_event);
-        formData.append('kategori',     kategori);
-        formData.append('tanggalEvent', tanggal_event);
-        formData.append('waktuMulai',   waktu_mulai);
-        formData.append('waktuSelesai', waktu_selesai);
-        formData.append('lokasi',       lokasi);
-        formData.append('status',       status);
-        formData.append('deskripsi',    deskripsi);
-        formData.append('foto',         foto);
+        var formData = new FormData($('#formAddEvent')[0]);
+        formData.append('action', 'tambah');
+        formData.append('lokasi', $('#lokasiEvent').val());
 
         $.ajax({
-            url         : BASE_URL + 'proses/proses_event.php',
-            type        : 'POST',
-            dataType    : 'json',
-            data        : formData,
-            processData : false,
-            contentType : false,
-            success: function (response) {
-                if (response.success == true) {
-                    Swal.fire({
-                        icon              : 'success',
-                        title             : 'Berhasil!',
-                        text              : response.message,
-                        showConfirmButton : false,
-                        timer             : 1500
-                    }).then(() => {
+            url: BASE_URL + 'proses/proses_event.php',
+            type: 'POST',
+            dataType: 'json',
+            data: formData,
+            processData: false, contentType: false,
+            success: function (res) {
+                if (res.success) {
+                    Swal.fire('Berhasil!', res.message, 'success').then(() => {
                         $('#modalAddEvent').modal('hide');
-                        $('#formAddEvent')[0].reset();
-                        loadTableEvent();
-                        loadCardEvent();
+                        loadTableEvent(); loadCardEvent();
                     });
                 } else {
-                    Swal.fire('Gagal!', response.message, 'error');
+                    Swal.fire('Gagal!', res.message, 'error');
                 }
-            },
-            error: function (xhr) {
-                Swal.fire('Error!', 'Terjadi kesalahan pada server!', 'error');
-                console.error('AJAX Error:', xhr.responseText);
             }
         });
     });
 
+    // Edit Event (Ambil Data)
     $(document).on('click', '.btnEditEvent', function () {
         var id = $(this).data('id');
-
         $.ajax({
-            url      : BASE_URL + 'proses/proses_event.php',
-            type     : 'GET',
-            dataType : 'json',
-            data     : { action: 'baca', id: id },
-            success  : function (response) {
-                if (response.success == true) {
-                    var item = response.data;
-
+            url: BASE_URL + 'proses/proses_event.php',
+            type: 'GET',
+            dataType: 'json',
+            data: { action: 'baca', id: id },
+            success: function (res) {
+                if (res.success) {
+                    var item = res.data;
                     $('#edit_id_event').val(item.mev_id_event);
                     $('#editNamaEvent').val(item.mev_nama_event);
-                    $('#editKategori').val(item.mev_kategori); 
+                    $('#editKategori').val(item.mev_kategori);
+                    if ($('#editKategori').val() === null) {
+                        $('#editKategori').val(''); // Reset ke placeholder
+                        console.warn("Kategori tidak terdaftar di select option: " + item.mev_kategori);
+                    }
                     $('#editTanggalEvent').val(item.mev_tanggal_event);
                     $('#editWaktuMulai').val(item.mev_waktu_mulai);
-                    
-                    // PERBAIKAN DI SINI: mev_waktu_selesai diubah menjadi mew_waktu_selesai sesuai DB
                     $('#editWaktuSelesai').val(item.mew_waktu_selesai);
                     
-                    $('#editLokasi').val(item.mev_lokasi);
+                    // Set lokasi dan trigger change untuk dropdown edit
+                    $('#editLokasiEvent').val(item.mev_lokasi);
+                    
                     $('#editStatus').val(item.mev_status);
                     $('#editDeskripsi').val(item.mev_deskripsi);
                     $('#editFotoLama').val(item.mev_foto);
-
                     $('#editPreviewFoto').attr('src', getFotoUrlEvent(item.mev_foto)).show();
+                    
                     $('#modalEditEvent').modal('show');
-
-                } else {
-                    Swal.fire('Gagal!', response.message, 'error');
                 }
-            },
-            error: function (xhr) {
-                Swal.fire('Error!', 'Gagal mengambil data event!', 'error');
-                console.error('AJAX Error:', xhr.responseText);
             }
         });
     });
 
+    // Update Event (Simpan Edit)
     $('#btnUpdateEvent').click(function () {
-        var id             = $('#edit_id_event').val();
-        var nama_event     = $('#editNamaEvent').val();
-        var kategori       = $('#editKategori').val() || ''; 
-        var tanggal_event  = $('#editTanggalEvent').val();
-        var waktu_mulai    = $('#editWaktuMulai').val();
-        var waktu_selesai  = $('#editWaktuSelesai').val();
-        var lokasi         = $('#editLokasi').val();
-        var status         = $('#editStatus').val();
-        var deskripsi      = $('#editDeskripsi').val();
-        var foto           = $('#editFoto')[0].files[0];
-        var fotoLama       = $('#editFotoLama').val();
+        if (!validateForm($('#formEditEvent'))) return;
 
-        if (!nama_event)     { Swal.fire('Perhatian!', 'Nama event tidak boleh kosong!', 'warning'); return; }
-        if (!kategori)       { Swal.fire('Perhatian!', 'Kategori harus dipilih!', 'warning'); return; }
-        if (!tanggal_event)  { Swal.fire('Perhatian!', 'Tanggal event harus diisi!', 'warning'); return; }
-        if (!waktu_mulai)    { Swal.fire('Perhatian!', 'Waktu mulai harus diisi!', 'warning'); return; }
-        if (!waktu_selesai)  { Swal.fire('Perhatian!', 'Waktu selesai harus diisi!', 'warning'); return; }
-        if (waktu_selesai <= waktu_mulai) { Swal.fire('Perhatian!', 'Waktu selesai harus setelah waktu mulai!', 'warning'); return; }
-        if (!lokasi)         { Swal.fire('Perhatian!', 'Lokasi tidak boleh kosong!', 'warning'); return; }
-
-        var formData = new FormData();
-        formData.append('action',       'edit');
-        formData.append('id',           id);
-        formData.append('namaEvent',    nama_event);
-        formData.append('kategori',     kategori);
-        formData.append('tanggalEvent', tanggal_event);
-        formData.append('waktuMulai',   waktu_mulai);
-        formData.append('waktuSelesai', waktu_selesai);
-        formData.append('lokasi',       lokasi);
-        formData.append('status',       status);
-        formData.append('deskripsi',    deskripsi);
-        formData.append('fotoLama',     fotoLama);
-        if (foto) {
-            formData.append('foto', foto);
-        }
+        var formData = new FormData($('#formEditEvent')[0]);
+        formData.append('action', 'edit');
+        formData.append('lokasi', $('#editLokasiEvent').val());
 
         $.ajax({
-            url         : BASE_URL + 'proses/proses_event.php',
-            type        : 'POST',
-            dataType    : 'json',
-            data        : formData,
-            processData : false,
-            contentType : false,
-            success: function (response) {
-                if (response.success == true) {
-                    Swal.fire({
-                        icon              : 'success',
-                        title             : 'Berhasil!',
-                        text              : response.message,
-                        showConfirmButton : false,
-                        timer             : 1500
-                    }).then(() => {
+            url: BASE_URL + 'proses/proses_event.php',
+            type: 'POST',
+            dataType: 'json',
+            data: formData,
+            processData: false, contentType: false,
+            success: function (res) {
+                if (res.success) {
+                    Swal.fire('Berhasil!', res.message, 'success').then(() => {
                         $('#modalEditEvent').modal('hide');
-                        $('#formEditEvent')[0].reset();
-                        loadTableEvent();
-                        loadCardEvent();
+                        loadTableEvent(); loadCardEvent();
                     });
                 } else {
-                    Swal.fire('Gagal!', response.message, 'error');
+                    Swal.fire('Gagal!', res.message, 'error');
                 }
-            },
-            error: function (xhr) {
-                Swal.fire('Error!', 'Terjadi kesalahan pada server!', 'error');
-                console.error('AJAX Error:', xhr.responseText);
             }
         });
     });
 
+    // Hapus Event
     $(document).on('click', '.btnHapusEvent', function () {
-        var id   = $(this).data('id');
-        var nama = $(this).data('nama');
-
+        var id = $(this).data('id');
         Swal.fire({
-            title              : 'Hapus Event?',
-            text               : `"${nama}" akan dihapus permanen dan tidak bisa dikembalikan!`,
-            icon               : 'warning',
-            showCancelButton   : true,
-            confirmButtonColor : '#d33',
-            cancelButtonColor  : '#6c757d',
-            confirmButtonText  : 'Ya, Hapus!',
-            cancelButtonText   : 'Batal'
+            title: 'Hapus Event?', text: "Data akan dihapus permanen!", icon: 'warning',
+            showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya, Hapus!'
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url      : BASE_URL + 'proses/proses_event.php',
-                    type     : 'POST',
-                    dataType : 'json',
-                    data     : { action: 'hapus', id: id },
-                    success  : function (response) {
-                        if (response.success == true) {
-                            Swal.fire({
-                                icon              : 'success',
-                                title             : 'Berhasil!',
-                                text              : response.message,
-                                showConfirmButton : false,
-                                timer             : 1500
-                            }).then(() => {
-                                loadTableEvent();
-                                loadCardEvent();
-                            });
-                        } else {
-                            Swal.fire('Gagal!', response.message, 'error');
-                        }
-                    },
-                    error: function (xhr) {
-                        Swal.fire('Error!', 'Terjadi kesalahan pada server!', 'error');
-                        console.error('AJAX Error:', xhr.responseText);
-                    }
+                    url: BASE_URL + 'proses/proses_event.php',
+                    type: 'POST',
+                    data: { action: 'hapus', id: id },
+                    success: () => { loadTableEvent(); loadCardEvent(); }
                 });
             }
         });
     });
 });
 
-function cariEvent(keyword, status) {
+// --- FUNGSI GLOBAL (DI LUAR DOCUMENT READY) ---
+
+function validateForm(form) {
+    var valid = true;
+    form.find('[required]').each(function() {
+        if (!$(this).val()) {
+            Swal.fire('Perhatian!', 'Mohon lengkapi field wajib!', 'warning');
+            valid = false;
+            return false;
+        }
+    });
+    return valid;
+}
+
+function loadLokasiDropdown() {
     $.ajax({
-        url      : BASE_URL + 'proses/proses_event.php',
-        type     : 'GET',
-        dataType : 'json',
-        data     : { action: 'cari', q: keyword, status: status },
-        beforeSend: function () {
-            $('#tbodyEvent').html(`
-                <tr>
-                    <td colspan="11" class="text-center py-4">
-                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                        <span class="ms-2 text-muted">Mencari...</span>
-                    </td>
-                </tr>
-            `);
-        },
-        success: function (response) {
-            if (response.success == true) {
-                if (keyword !== '') {
-                    $('#labelHasilSearch')
-                        .html(`Menampilkan <strong>${response.total}</strong> hasil untuk "<em>${escHtmlEvent(keyword)}</em>"`)
-                        .show();
-                } else {
-                    $('#labelHasilSearch').hide();
-                }
-                renderTbodyEvent(response.data, keyword);
-            } else {
-                Swal.fire('Gagal!', response.message, 'error');
-            }
-        },
-        error: function (xhr) {
-            Swal.fire('Error!', 'Gagal melakukan pencarian!', 'error');
-            console.error('AJAX Error:', xhr.responseText);
+        url: "https://webapi.bps.go.id/v1/api/domain/type/kabbyprov/prov/3500/key/b6028c4ff88af791a4f0a24fa44457a5/",
+        type: "GET",
+        dataType: "json",
+        success: function(response) {
+            var listKabKota = response.data[1];
+            var options = '<option value="" disabled selected>Pilih Kabupaten/Kota...</option>';
+            $.each(listKabKota, function(index, item) {
+                options += `<option value="${item.domain_name}">${item.domain_name}</option>`;
+            });
+            $('#lokasiEvent, #editLokasiEvent').html(options);
         }
     });
 }
 
 function loadTableEvent() {
-    var keyword = $('#search-event').val().trim();
-    var status  = $('#filter-status').val();
-
-    if (keyword !== '') {
-        cariEvent(keyword, status);
-        return;
-    }
-
     $.ajax({
-        url      : BASE_URL + 'proses/proses_event.php',
-        type     : 'GET',
-        dataType : 'json',
-        data     : { action: 'baca', status: status },
-        beforeSend: function () {
-            $('#tbodyEvent').html(`
-                <tr>
-                    <td colspan="11" class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <div class="text-muted mt-2">Memuat data...</div>
-                    </td>
-                </tr>
-            `);
-        },
-        success: function (response) {
-            if (response.success == true) {
-                $('#labelHasilSearch').hide();
-                renderTbodyEvent(response.data, '');
-            } else {
-                Swal.fire('Gagal!', response.message, 'error');
-            }
-        },
-        error: function (xhr) {
-            Swal.fire('Error!', 'Gagal memuat data event!', 'error');
-            console.error('AJAX Error:', xhr.responseText);
-        }
+        url: BASE_URL + 'proses/proses_event.php',
+        type: 'GET',
+        data: { action: 'baca' },
+        success: function (res) { if (res.success) renderTbodyEvent(res.data, ''); }
+    });
+}
+
+function cariEvent(keyword, status) {
+    $.ajax({
+        url: BASE_URL + 'proses/proses_event.php',
+        type: 'GET',
+        data: { action: 'cari', q: keyword, status: status },
+        success: function (res) { renderTbodyEvent(res.data, keyword); }
     });
 }
 
 function renderTbodyEvent(data, keyword) {
     var tbody = '';
 
-    if (data.length === 0) {
-        tbody = `
+    $.each(data, function (index, item) {
+        // 1. Mapping Kategori (sesuaikan value dengan yang ada di database Anda)
+        var badgeKategori = {
+            'Konser': 'bg-primary',
+            'Budaya': 'bg-warning',
+            'Olahraga': 'bg-info',
+            'Festival': 'bg-purple' // pastikan class ini ada di CSS Anda
+        };
+        // Fallback ke 'bg-secondary' jika kategori tidak ditemukan
+        var kelasKategori = badgeKategori[item.mev_kategori] || 'bg-secondary';
+
+        // 2. Mapping Status
+        var badgeStatus = {
+            'Aktif': 'bg-success',
+            'Selesai': 'bg-info',
+            'Batal': 'bg-danger'
+        };
+        var kelasStatus = badgeStatus[item.mev_status] || 'bg-secondary';
+
+        tbody += `
             <tr>
-                <td colspan="11" class="text-center text-muted py-4">
-                    <i class="ti ti-calendar-off fs-2 d-block mb-2"></i>
-                    ${keyword ? 'Tidak ada hasil untuk "<strong>' + escHtmlEvent(keyword) + '</strong>"' : 'Belum ada data event'}
+                <td>${item.mev_id_event}</td>
+                <td><div class="fw-bold">${item.mev_nama_event}</div></td>
+                <td>${item.mev_tanggal_event}</td>
+                <td>${item.mev_waktu_mulai} - ${item.mew_waktu_selesai}</td>
+                <td>${item.mev_lokasi}</td>
+                <td><img src="${getFotoUrlEvent(item.mev_foto)}" width="40" height="40" style="object-fit:cover; border-radius:4px;"></td>
+                
+                <td><span class="badge ${kelasKategori} text-white">${item.mev_kategori}</span></td>
+                
+                <td class="text-truncate" style="max-width: 150px;">${item.mev_deskripsi ?? '-'}</td>
+                
+                <td><span class="badge ${kelasStatus} text-white">${item.mev_status}</span></td>
+                
+                <td class="text-nowrap">
+                    <button class="btn btn-sm btn-warning btnEditEvent" data-id="${item.mev_id_event}"><i class="ti ti-edit"></i></button>
+                    <button class="btn btn-sm btn-danger btnHapusEvent" data-id="${item.mev_id_event}"><i class="ti ti-trash"></i></button>
                 </td>
             </tr>
         `;
-    } else {
-        $.each(data, function (index, item) {
-            var badgeKategori = {
-                'Festival' : 'bg-primary text-white',
-                'Budaya'   : 'bg-warning text-white',
-                'Musik'    : 'bg-danger text-white',
-                'Olahraga' : 'bg-info text-white'
-            };
-            var kelasKategori = badgeKategori[item.mev_kategori] || 'bg-secondary text-white';
-
-            var badgeStatus = {
-                'Aktif'   : 'bg-success text-white',
-                'Selesai' : 'bg-info text-white',
-                'Batal'   : 'bg-danger text-white'
-            };
-            var kelasStatus = badgeStatus[item.mev_status] || 'bg-secondary text-white';
-
-            var fotoSrc = getFotoUrlEvent(item.mev_foto);
-
-            var nama     = hlKeywordEvent(escHtmlEvent(item.mev_nama_event), keyword);
-            var kategori = hlKeywordEvent(escHtmlEvent(item.mev_kategori ?? '-'), keyword);
-            var lokasi   = hlKeywordEvent(escHtmlEvent(item.mev_lokasi ?? '-'), keyword);
-
-            tbody += `
-                <tr>
-                    <td class="text-center">${item.mev_id_event}</td>
-                    <td><div class="fw-bold">${nama}</div></td>
-                    <td class="d-none d-lg-table-cell">${item.mev_tanggal_event}</td>
-                    
-                    <!-- PERBAIKAN DI SINI: mev_waktu_selesai diubah menjadi mew_waktu_selesai -->
-                    <td class="d-none d-lg-table-cell">${item.mev_waktu_mulai} - ${item.mew_waktu_selesai}</td>
-                    
-                    <td class="d-none d-lg-table-cell">${lokasi}</td>
-                    <td class="w-1">
-                        <img src="${fotoSrc}" alt="Foto Event" 
-                             width="60" height="60" 
-                             style="object-fit:cover; border-radius:6px;"
-                             onerror="this.src='${BASE_URL}../assets/img/placeholder.jpg'">
-                    </td>
-                    <td class="d-none d-md-table-cell">
-                        <span class="badge ${kelasKategori}">${kategori}</span>
-                    </td>
-                    <td class="d-none d-sm-table-cell" style="max-width: 150px;">
-                        <span class="d-inline-block text-truncate" style="max-width: 140px;" 
-                              title="${escHtmlEvent(item.mev_deskripsi ?? '-')}">
-                            ${escHtmlEvent(item.mev_deskripsi ?? '-')}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge ${kelasStatus}">${item.mev_status ?? '-'}</span>
-                    </td>
-                    <td class="text-end text-nowrap">
-                        <button class="btn btn-sm btn-warning me-1 btnEditEvent" 
-                                data-id="${item.mev_id_event}" 
-                                title="Edit">
-                            <i class="ti ti-edit fs-4"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger btnHapusEvent" 
-                                data-id="${item.mev_id_event}" 
-                                data-nama="${escHtmlEvent(item.mev_nama_event)}"
-                                title="Hapus">
-                            <i class="ti ti-trash fs-4"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
-    }
-
+    });
     $('#tbodyEvent').html(tbody);
 }
 
 function loadCardEvent() {
     $.ajax({
-        url      : BASE_URL + 'proses/proses_event.php',
-        type     : 'GET',
-        dataType : 'json',
-        data     : { action: 'statistik' },
-        success  : function (response) {
-            if (response.success == true) {
-                var data = response.data;
-                $('#cardTotalEvent').text(data.total ?? 0);
-                $('#cardAktif').text(data.aktif ?? 0);
-                $('#cardSelesai').text(data.selesai ?? 0);
-                $('#cardBatal').text(data.batal ?? 0);
+        url: BASE_URL + 'proses/proses_event.php',
+        type: 'GET',
+        data: { action: 'statistik' },
+        success: function (res) {
+            if (res.success) {
+                $('#cardTotalEvent').text(res.data.total || 0);
+                $('#cardAktif').text(res.data.aktif || 0);
+                $('#cardSelesai').text(res.data.selesai || 0);
+                $('#cardBatal').text(res.data.batal || 0);
             }
-        },
-        error: function (xhr) {
-            console.error('Gagal load statistik:', xhr.responseText);
         }
     });
 }
 
 function getFotoUrlEvent(foto) {
-    if (!foto) {
-        return BASE_URL + '../assets/img/placeholder.jpg';
-    }
-    if (foto.startsWith('http://') || foto.startsWith('https://')) {
-        return foto; 
-    }
-    return BASE_URL + '../uploads/event/' + foto;
-}
-
-function hlKeywordEvent(teks, keyword) {
-    if (!keyword) return teks;
-    var regex = new RegExp('(' + escRegexEvent(keyword) + ')', 'gi');
-    return teks.replace(regex, '<mark class="p-0 bg-warning bg-opacity-50">$1</mark>');
-}
-
-function escHtmlEvent(str) {
-    return $('<div>').text(String(str ?? '')).html();
-}
-
-function escRegexEvent(str) {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return foto ? (foto.startsWith('http') ? foto : BASE_URL + '../uploads/event/' + foto) : BASE_URL + '../assets/img/placeholder.jpg';
 }

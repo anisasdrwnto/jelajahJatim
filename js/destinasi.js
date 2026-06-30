@@ -230,20 +230,34 @@ $(document).ready(function () {
         });
     });
 
-    // API untuk Kabupaten Kota Select option
+    // API untuk Kabupaten Kota Select option (Dipakai untuk Modal Tambah & Modal Edit)
     $.ajax({
         url      : `https://webapi.bps.go.id/v1/api/domain/type/kabbyprov/prov/3500/key/b6028c4ff88af791a4f0a24fa44457a5/`,
         type     : 'GET',
         dataType : 'json',
         success  : function(response){
             var listKabKota = response.data[1];
-            var option = '<option value="" disabled selected>Pilih Kabupaten/Kota...</option>';
+            
+            // Buat struktur option
+            var optionAdd = '<option value="" disabled selected>Pilih Kabupaten/Kota...</option>';
+            var optionEdit = '<option value="" disabled>Pilih Kabupaten/Kota...</option>'; // Tanpa 'selected' bawaan agar tidak bentrok saat inject data edit
+            
             $.each(listKabKota, function(index, item){
-                option += `<option value="${item.domain_name}">${item.domain_name}</option>`;
+                optionAdd += `<option value="${item.domain_name}">${item.domain_name}</option>`;
+                optionEdit += `<option value="${item.domain_name}">${item.domain_name}</option>`;
             });
-            $('#kabupatenKota').html(option);
+            
+            // Masukkan ke dropdown modal tambah dan modal edit
+            $('#kabupatenKota').html(optionAdd);
+            $('#editKabupatenKota').html(optionEdit);
+        },
+        error: function() {
+            // Antisipasi jika API BPS gagal dimuat
+            $('#editKabupatenKota').html('<option value="" disabled>Gagal memuat data Kabupaten/Kota</option>');
         }
     });
+
+    
 
 }); 
 

@@ -1,68 +1,60 @@
 <?php
-
+session_start();
 header('Content-Type: application/json');
 
-//proses login
+// Pastikan path koneksi.php benar (naik 1 folder ke folder 'api/')
+require_once '../koneksi.php'; 
 
-require_once '../koneksi.php';
-
-//Bikin class User
-class User{
-    private $db; //properti untuk menyimpan koneksi PDO
-
-    public function __construct($pdo){
-        $this->db = $pdo; //simpan koneksi PDO ke properti DB
+class User {
+    private $db;
+    public function __construct($pdo) {
+        $this->db = $pdo;
     }
 
-    //Buat fungsi untuk cek login
-    public function cekLogin($email, $password){
-        //Deklarasi variabel statement
-        $stmt = $this->db->prepare("SELECT * FROM mst_users WHERE mus_email = :email LIMIT 1"); //ambil email dari tabel mst_users yang maksimal 1 baris
-        $stmt->execute([':email' => $email]); //eksekusi statement dengan parameter email
-        $user = $stmt->fetch(PDO::FETCH_ASSOC); //ambil hasil eksekusi dalam bentuk array asosiatif(key-value)
+    public function cekLogin($email, $password) {
+        $stmt = $this->db->prepare("SELECT * FROM mst_users WHERE mus_email = :email LIMIT 1");
+        $stmt->execute([':email' => $email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if($user && password_verify($password, $user['mus_password'])){ //jika user ditemukan dengan password yang sesuai
-            return [                             //kembalikan hasil sukses berdasarkan nama dan role user
-                'success' => true, 
-                'user_id' => $user['mus_id_users'],
-                'nama'    => $user['mus_name'],  //ambil nama user dari tabel mst_users
-                'role'    => $user['mus_role'] 
+        // Verifikasi password
+        if ($user && password_verify($password, $user['mus_password'])) {
+            return [
+                'success' => true,
+                'data'    => $user // Mengembalikan seluruh data user
             ];
         }
-        return ['success' => false, 'message' => 'Email atau password salah!']; //kembalikan hasil gagal dengan pesan error
+        return ['success' => false, 'message' => 'Email atau password salah!'];
     }
 }
 
-//handling AJAX request
-
-//Cek apakah method yang digunakan POST atau bukan
-if($_SERVER['REQUEST_METHOD'] !== 'POST'){
+// Validasi Request
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Method tidak valid']);
     exit;
 }
 
-//Ambil data dari request POST di login.js
-$email    = trim($_POST['email'] ?? ''); //trim untuk menghapus spasi di awal dan akhir
+$email    = trim($_POST['email'] ?? '');
 $password = trim($_POST['password'] ?? '');
 
-
-//jika email atau password kosong, kembalikan pesan error
-if(empty($email) || empty($password)){
+if (empty($email) || empty($password)) {
     echo json_encode(['success' => false, 'message' => 'Email dan password harus diisi!']);
     exit;
 }
 
-//Buat objek User dan panggil fungsi cekLogin untuk memeriksa email dan password
-$user   = new User($pdo);
-$result = $user->cekLogin($email, $password); //hasil cekLogin akan mengembalikan array dengan key success login berhasil atau gagal
+$user_obj = new User($pdo); // Pastikan $pdo sudah terdefinisi di koneksi.php
+$result   = $user_obj->cekLogin($email, $password);
 
-//Jika hasilnya success,buat session untuk menyimpan sesi login
-if($result['success']){
-    session_start();
-    $_SESSION['user_id'] = $result['user_id'];
-    $_SESSION['nama']    = $result['nama'];
-    $_SESSION['role']    = $result['role'];
+// Jika sukses, isi data ke session
+if ($result['success']) {
+    $data = $result['data'];
+    
+    $_SESSION['mus_id_users'] = $data['mus_id_users'];
+    $_SESSION['mus_name']     = $data['mus_name'];
+    $_SESSION['mus_email']    = $data['mus_email'];
+    $_SESSION['role']         = $data['mus_role'];
+    
+    echo json_encode(['success' => true, 'message' => 'Login berhasil']);
+} else {
+    echo json_encode($result);
 }
-//Lempar hasil cekLogin dalam bentuk JSON ke login.js
-echo json_encode($result);
 ?>

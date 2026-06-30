@@ -30,9 +30,9 @@ $(document).ready(function () {
         var kuota          = $('#kuota').val();
         var kuota_terjual  = $('#kuotaTerjual').val();
 
-        if (!id_event)                     { Swal.fire('Perhatian!', 'Event harus dipilih!', 'warning'); return; }
-        if (harga === '' || harga < 0)      { Swal.fire('Perhatian!', 'Harga tiket harus diisi!', 'warning'); return; }
-        if (kuota === '' || kuota < 0)      { Swal.fire('Perhatian!', 'Kuota harus diisi!', 'warning'); return; }
+        if (!id_event)                                   { Swal.fire('Perhatian!', 'Event harus dipilih!', 'warning'); return; }
+        if (harga === '' || harga < 0)     { Swal.fire('Perhatian!', 'Harga tiket harus diisi!', 'warning'); return; }
+        if (kuota === '' || kuota < 0)     { Swal.fire('Perhatian!', 'Kuota harus diisi!', 'warning'); return; }
         if (kuota_terjual === '')           { kuota_terjual = 0; }
         if (parseInt(kuota_terjual) > parseInt(kuota)) {
             Swal.fire('Perhatian!', 'Kuota terjual tidak boleh lebih besar dari kuota total!', 'warning');
@@ -62,6 +62,7 @@ $(document).ready(function () {
                     }).then(() => {
                         $('#modalAddBooking').modal('hide');
                         $('#formAddBooking')[0].reset();
+                        // Refresh data setelah perubahan
                         loadTableBooking();
                         loadCardBooking();
                     });
@@ -111,16 +112,16 @@ $(document).ready(function () {
     });
 
     $('#btnUpdateBooking').click(function () {
-        var id             = $('#edit_id_tiket').val();
+        var id           = $('#edit_id_tiket').val();
         var id_event       = $('#editIdEvent').val();
-        var nama_tiket      = $('#editNamaTiket').val();
+        var nama_tiket     = $('#editNamaTiket').val();
         var harga          = $('#editHarga').val();
         var kuota          = $('#editKuota').val();
         var kuota_terjual  = $('#editKuotaTerjual').val();
 
-        if (!id_event)                     { Swal.fire('Perhatian!', 'Event harus dipilih!', 'warning'); return; }
-        if (harga === '' || harga < 0)      { Swal.fire('Perhatian!', 'Harga tiket harus diisi!', 'warning'); return; }
-        if (kuota === '' || kuota < 0)      { Swal.fire('Perhatian!', 'Kuota harus diisi!', 'warning'); return; }
+        if (!id_event)                                   { Swal.fire('Perhatian!', 'Event harus dipilih!', 'warning'); return; }
+        if (harga === '' || harga < 0)     { Swal.fire('Perhatian!', 'Harga tiket harus diisi!', 'warning'); return; }
+        if (kuota === '' || kuota < 0)     { Swal.fire('Perhatian!', 'Kuota harus diisi!', 'warning'); return; }
         if (kuota_terjual === '')           { kuota_terjual = 0; }
         if (parseInt(kuota_terjual) > parseInt(kuota)) {
             Swal.fire('Perhatian!', 'Kuota terjual tidak boleh lebih besar dari kuota total!', 'warning');
@@ -151,6 +152,7 @@ $(document).ready(function () {
                     }).then(() => {
                         $('#modalEditBooking').modal('hide');
                         $('#formEditBooking')[0].reset();
+                        // Refresh data setelah perubahan
                         loadTableBooking();
                         loadCardBooking();
                     });
@@ -194,6 +196,7 @@ $(document).ready(function () {
                                 showConfirmButton : false,
                                 timer             : 1500
                             }).then(() => {
+                                // Refresh data setelah perubahan
                                 loadTableBooking();
                                 loadCardBooking();
                             });
@@ -212,10 +215,8 @@ $(document).ready(function () {
 
 });
 
+// --- FUNGSI PENDUKUNG ---
 
-// Ambil daftar event untuk dropdown #idEvent dan #editIdEvent.
-// selectedId  : jika diisi, opsi dengan id tersebut akan langsung di-set selected (dipakai saat edit).
-// callback    : dijalankan setelah dropdown selesai di-render (dipakai saat edit, supaya urutan rapi).
 function loadDaftarEvent(selectedId, callback) {
     $.ajax({
         url      : BASE_URL + 'proses/proses_booking.php',
@@ -358,7 +359,7 @@ function renderTbody(data, keyword) {
             var sisa        = kuota - terjual;
 
             var kelasSisa = 'bg-success text-white';
-            if (sisa <= 0)            { kelasSisa = 'bg-danger text-white'; }
+            if (sisa <= 0)              { kelasSisa = 'bg-danger text-white'; }
             else if (sisa <= kuota * 0.2) { kelasSisa = 'bg-warning text-white'; }
 
             tbody += `
@@ -425,7 +426,6 @@ function loadCardBooking() {
     });
 }
 
-// Helper - format angka jadi "Rp 50.000"
 function formatRupiah(angka) {
     var n = parseFloat(angka) || 0;
     return 'Rp ' + n.toLocaleString('id-ID', { maximumFractionDigits: 0 });
@@ -437,12 +437,10 @@ function hlKeyword(teks, keyword) {
     return teks.replace(regex, '<mark class="p-0 bg-warning bg-opacity-50">$1</mark>');
 }
 
-// Helper — escape string HTML (cegah XSS)
 function escHtml(str) {
     return $('<div>').text(String(str ?? '')).html();
 }
 
-// Helper — escape karakter spesial untuk RegExp
 function escRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

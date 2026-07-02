@@ -355,9 +355,6 @@ if (empty($action)) {
 $destinasi = new Destinasi($pdo);
 $result    = [];
 
-// MODUS DEVELOPMENT AKTIF UNTUK MELIHAT ERROR JIKA ADA FITUR PHP LAPTOP YANG MATI
-define('DEV_MODE', true);
-
 try {
 
     switch ($action) {

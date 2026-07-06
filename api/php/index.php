@@ -861,13 +861,30 @@ if ($isLoggedIn) {
     }
 
     function bindHeroCta() {
-       $('#btnMulai').on('click', function () {
-        $('.cloud-parallax').addClass('active'); 
-            setTimeout(() => {
-            document.getElementById('destinasi').scrollIntoView({ behavior: 'smooth' });
-        }, 1500); 
-        });
-    }
+    // Gunakan .off() untuk mencegah bentrok, lalu .on()
+    $('#btnMulai').off('click').on('click', function (e) {
+        e.preventDefault(); 
+        console.log("Tombol Mulai ditekan! Status Login:", isLoggedIn); // Pelacak di Console
+        
+        const cloud = $('.cloud-parallax');
+        
+        // Hapus class active dulu untuk me-reset animasi
+        cloud.removeClass('active');
+        
+        // Beri jeda sangat singkat agar browser mengenali perubahan DOM
+        setTimeout(() => {
+            cloud.addClass('active');
+        }, 20); 
+
+        // Eksekusi scroll setelah animasi awan berjalan (sesuaikan dengan CSS 1.4s)
+        setTimeout(() => {
+            const destinasi = document.getElementById('destinasi');
+            if (destinasi) {
+                destinasi.scrollIntoView({ behavior: 'smooth' });
+            }
+        }, 1400); 
+    });
+}
 
     function bindAuthButtons() {
         $('#btnLogin').on('click', () => window.location.href = BASE_URL + 'php/login.php');

@@ -124,7 +124,7 @@ if ($isLoggedIn) {
     </div>
 
     <div class="cloud-parallax" id="cloudParallax">
-        <img src="./assets/footer-clouds-1.png" alt="Awan">
+        <img src="/assets/footer-clouds-1.png" alt="Awan">
     </div>
 </section>
 

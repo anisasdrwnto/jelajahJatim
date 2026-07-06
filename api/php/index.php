@@ -307,9 +307,9 @@ if ($isLoggedIn) {
                                     </h5>
                                     <span class="text-muted" style="font-size:13px;">Berdasarkan pengunjung</span>
                                 </div>
-                                <button type="button" class="btn text-white fw-semibold rounded-pill px-3 py-2 btn-write-review"
-                                        style="background-color:#0f6e56;font-size:14px;box-shadow:0 4px 10px rgba(15,110,86,0.2);"
-                                        data-bs-toggle="modal" data-bs-target="#modalUlasan">
+                                <button type="button" id="btnTulisUlasan"
+                                        class="btn text-white fw-semibold rounded-pill px-3 py-2 btn-write-review"
+                                        style="background-color:#0f6e56;font-size:14px;box-shadow:0 4px 10px rgba(15,110,86,0.2);">
                                     <i class="bi bi-pencil-square me-1"></i> Tulis Ulasan
                                 </button>
                             </div>
@@ -738,8 +738,8 @@ if ($isLoggedIn) {
                         <h3>${item.mev_nama_event}</h3>
                         <p>${item.mev_deskripsi}</p>
                         <button type="button" class="btn card-btn w-100 mt-3 rounded-3 py-2 fw-semibold"
-                                data-bs-toggle="modal" data-bs-target="#modalPesanTiket"
-                                onclick="bukaModalTiket('${item.mev_id_event}', '${item.mev_nama_event}')">
+                                data-event-id="${item.mev_id_event}"
+                                data-event-nama="${escHtml(item.mev_nama_event)}">
                             Daftar Sekarang
                         </button>
                     </div>
@@ -754,6 +754,7 @@ if ($isLoggedIn) {
         $('input[name="metode_bayar"]').prop('checked', false);
         $('#ringkasanTotal').addClass('d-none');
 
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPesanTiket')).show();
         $.ajax({
             url: BASE_URL + 'proses/proses_pemesanan.php',
             type: 'GET',
@@ -879,13 +880,10 @@ if ($isLoggedIn) {
             if (!cekLogin()) e.preventDefault();
         });
 
-        // Tombol "Tulis Ulasan" di modal detail destinasi
-        $('[data-bs-target="#modalUlasan"]').on('click', function (e) {
-            if (!isLoggedIn) {
-                e.preventDefault();
-                e.stopPropagation();
-                cekLogin();
-            }
+        $(document).on('click', '#btnTulisUlasan', function (e) {
+            e.preventDefault();
+            if (!cekLogin()) return;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalUlasan')).show();
         });
 
         // Tombol "Daftar Sekarang" pada kartu event (render dinamis -> event delegation)

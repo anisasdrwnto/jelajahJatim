@@ -861,22 +861,13 @@ if ($isLoggedIn) {
     }
 
     function bindHeroCta() {
-    // Gunakan .off() untuk mencegah bentrok, lalu .on()
     $('#btnMulai').off('click').on('click', function (e) {
         e.preventDefault(); 
-        console.log("Tombol Mulai ditekan! Status Login:", isLoggedIn); // Pelacak di Console
         
-        const cloud = $('.cloud-parallax');
+        // 1. Tambahkan class active untuk memicu animasi awan naik
+        $('.cloud-parallax').addClass('active');
         
-        // Hapus class active dulu untuk me-reset animasi
-        cloud.removeClass('active');
-        
-        // Beri jeda sangat singkat agar browser mengenali perubahan DOM
-        setTimeout(() => {
-            cloud.addClass('active');
-        }, 20); 
-
-        // Eksekusi scroll setelah animasi awan berjalan (sesuaikan dengan CSS 1.4s)
+        // 2. Tunggu 1.4 detik (sampai animasi awan selesai), baru scroll ke bawah
         setTimeout(() => {
             const destinasi = document.getElementById('destinasi');
             if (destinasi) {
@@ -884,7 +875,7 @@ if ($isLoggedIn) {
             }
         }, 1400); 
     });
-}
+    }
 
     function bindAuthButtons() {
         $('#btnLogin').on('click', () => window.location.href = BASE_URL + 'php/login.php');

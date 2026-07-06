@@ -138,14 +138,11 @@ body {
     bottom: 0;
     left: 0;
     width: 100%;
-    z-index: 9999; /* Kita paksa naik ke lapisan paling atas */
+    z-index: 3;
     pointer-events: none;
+    opacity: 0; 
+    transform: translateY(100%); 
     
-    /* MATIKAN SEMENTARA DUA BARIS INI */
-    /* opacity: 0; */
-    /* transform: translateY(100%); */
-    
-    opacity: 1; /* Tambahkan ini agar langsung terlihat */
     transition: opacity 0.6s ease, transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 

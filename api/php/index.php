@@ -124,7 +124,7 @@ if ($isLoggedIn) {
     </div>
 
     <div class="cloud-parallax" id="cloudParallax">
-        <img src="/assets/footer-clouds 1.png" alt="">
+        <img src="../assets/footer-clouds 1.png" alt="Awan">
     </div>
 </section>
 
@@ -861,11 +861,11 @@ if ($isLoggedIn) {
     }
 
     function bindHeroCta() {
-        $('#btnMulai').on('click', function () {
-            $('#cloudParallax').addClass('active');
-            setTimeout(() => {
-                document.getElementById('destinasi').scrollIntoView({ behavior: 'smooth' });
-            }, 800);
+       $('#btnMulai').on('click', function () {
+        $('.cloud-parallax').addClass('active'); // <--- Ubah '#' menjadi '.'
+        setTimeout(() => {
+            document.getElementById('destinasi').scrollIntoView({ behavior: 'smooth' });
+        }, 800);
         });
     }
 

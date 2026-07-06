@@ -892,6 +892,10 @@ if ($isLoggedIn) {
                 e.preventDefault();
                 e.stopPropagation();
                 cekLogin();
+            } else {
+                const eventId = $(this).data('event-id');
+                const eventName = $(this).data('event-nama');
+                bukaModalTiket(eventId, eventName);
             }
         });
     }

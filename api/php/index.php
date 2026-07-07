@@ -1056,6 +1056,12 @@ if ($isLoggedIn) {
         bindDestinasiFilters();
         bindTicketForm();
         bindReviewForm();
+        $('#navMenu').on('show.bs.collapse', function () {
+        $('#navbar').addClass('nav-open');
+    });
+        $('#navMenu').on('hide.bs.collapse', function () {
+        $('#navbar').removeClass('nav-open');
+    });
 
         loadDestinasi();
         loadEvent();

@@ -207,8 +207,13 @@ $nama_belakang = $name_parts[1] ?? '';
           </div>
         </li>
 
-        <li class="nav-item <?= ($current_dir == 'booking') ? 'active' : '' ?>">
-          <a class="nav-link" href="<?= $base_url ?>/booking/booking_main.php">
+        <li class="nav-item dropdown <?= ($current_dir == 'booking') ? 'active' : '' ?>">
+          <a class="nav-link dropdown-toggle <?= ($current_dir == 'booking') ? 'show' : '' ?>"
+             href="#navbar-booking"
+             data-bs-toggle="dropdown"
+             data-bs-auto-close="false"
+             role="button"
+             aria-expanded="<?= ($current_dir == 'booking') ? 'true' : 'false' ?>">
             <span class="nav-link-icon d-md-none d-lg-inline-block">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
                 stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -219,6 +224,16 @@ $nama_belakang = $name_parts[1] ?? '';
             </span>
             <span class="nav-link-title">Booking Tiket (Event)</span>
           </a>
+          <div class="dropdown-menu <?= ($current_dir == 'booking') ? 'show' : '' ?>">
+            <a class="dropdown-item <?= ($current_page == 'booking_main.php') ? 'active' : '' ?>"
+               href="<?= $base_url ?>/booking/booking_main.php">
+              Booking Tiket Event
+            </a>
+            <a class="dropdown-item <?= ($current_page == 'daftar_pemesanan.php') ? 'active' : '' ?>"
+               href="<?= $base_url ?>/daftar_tiket/daftar_tiket.php">
+              Daftar Pemesanan Tiket
+            </a>
+          </div>
         </li>
 
         <li class="nav-item mt-auto"></li>

@@ -20,20 +20,20 @@ $(document).ready(function(){
             type: 'POST',
             dataType: 'json',
             data : data,
-            success:function(response){
-                if(response === true){
-                    Swal.fire({
-                        icon: 'success',
-                        text: 'Akun Anda berhasil dibuat!',
-                        timer: 1000,
-                        showConfirmButton: false
-                    }).then(()=>{
-                        window.location.replace(BASE_URL + 'php/index.php');
-                    });
-                }else if(response.includes("email")){
-                    Swal.fire({icon: 'error', text: 'Email sudah terdaftar!'});
-                }
-            },
+           success:function(response){
+    if(response.success === true){
+        Swal.fire({
+            icon: 'success',
+            text: response.message,
+            timer: 1000,
+            showConfirmButton: false
+        }).then(()=>{
+            window.location.replace(BASE_URL + 'php/index.php');
+        });
+    }else{
+        Swal.fire({icon: 'error', text: response.message});
+    }
+},
             error:function(){
                 Swal.fire({icon: 'error', text: 'Akun gagal didaftarkan!'});
             }

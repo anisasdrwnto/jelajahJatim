@@ -11,6 +11,10 @@
 </head>
 <body class="min-vh-100 d-flex align-items-center justify-content-center p-3 p-md-4">
 
+    <a href="/index.php" class="back-to-home">
+        <i class="bi bi-arrow-left"></i> Kembali ke Beranda
+    </a>
+
     <div class="card login-card shadow-lg border-0 w-100">
         <div class="row g-0 h-100">
             <div class="col-lg-6 position-relative p-0 d-none d-lg-block">

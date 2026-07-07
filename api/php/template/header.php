@@ -108,8 +108,8 @@ $nama_belakang = $name_parts[1] ?? '';
 
           <div class="dropdown-divider"></div>
 
-          <<a href="api/php/logout.php" class="dropdown-item text-danger">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon dropdown-item-icon text-danger" width="24" height="24"
+            <a href="<?= $base_url ?>/logout.php" class="dropdown-item text-danger">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon dropdown-item-icon text-danger" width="24" height="24"
               viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
               <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
               <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />

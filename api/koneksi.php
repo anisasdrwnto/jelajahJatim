@@ -25,12 +25,18 @@ try {
     $dsn = "mysql:host=$host;port=$port;dbname=$database;ssl-mode=VERIFY_IDENTITY";
     
     $pdo = new PDO($dsn, $username, $password, [
+        
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, 
         // 1. Memasukkan sertifikat SSL
         $ssl_ca_attr => $cert_path, 
         // 2. OBAT ERROR 1105: Matikan verifikasi ketat server cert agar SSL tidak diam-diam mati
         $ssl_verify_attr => false 
     ]);
+
+    // Samakan timezone koneksi dengan WIB (Asia/Jakarta), supaya
+    // CURRENT_TIMESTAMP / NOW() di database sesuai jam lokal,
+    // bukan default UTC bawaan server TiDB.
+    $pdo->exec("SET time_zone = '+07:00'");
     
     // echo "Koneksi berhasil!"; 
 } catch (PDOException $e) {

@@ -34,8 +34,11 @@ class Tiket {
        Status pembayaran (Lunas/Pending) hanya dipakai untuk keperluan
        verifikasi panitia di lokasi, bukan untuk menentukan kuota. */
     public function pesanTiket($data) {
+        // PENTING: mtbk_id_user bertipe varchar (contoh: "USR001"), jadi JANGAN
+        // di-cast ke (int) -- itu akan selalu menghasilkan 0 untuk string
+        // yang tidak diawali angka. Cukup trim sebagai string.
         $userId = $data['user_id'] ?? null;
-        $userId = ($userId !== null && $userId !== '') ? (int)$userId : null;
+        $userId = ($userId !== null && $userId !== '') ? trim((string)$userId) : null;
 
         $eventId = $data['event_id'] ?? '';
         $tiketId = $data['tiket_id'] ?? '';
@@ -91,7 +94,8 @@ class Tiket {
             $stmt->bindValue(':booking_code', $bookingCode, PDO::PARAM_STR);
             $stmt->bindValue(':id_event', $eventId, PDO::PARAM_STR);
             $stmt->bindValue(':id_tiket', $tiketId, PDO::PARAM_STR);
-            $stmt->bindValue(':id_user', $userId, PDO::PARAM_INT);
+            // mtbk_id_user adalah varchar -> selalu bind sebagai string
+            $stmt->bindValue(':id_user', $userId, PDO::PARAM_STR);
             $stmt->bindValue(':jumlah_tiket', $jumlah, PDO::PARAM_INT);
             $stmt->bindValue(':total_harga', $totalHarga);
             $stmt->bindValue(':nama_pemesan', $nama, $nama === null ? PDO::PARAM_NULL : PDO::PARAM_STR);

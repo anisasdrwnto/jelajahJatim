@@ -270,6 +270,19 @@ $nama_belakang = $name_parts[1] ?? '';
   <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable" role="document">
     <div class="modal-content">
 
+      <!-- <div class="modal-header">
+        <h5 class="modal-title">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 text-primary" width="24" height="24"
+            viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+            <path d="M12 10m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+            <path d="M6.168 18.849a4 4 0 0 1 3.832 -2.849h4a4 4 0 0 1 3.834 2.855" />
+          </svg>
+          Edit Informasi Akun
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div> -->
 
       <form action="<?= $base_url ?>/akun/update_akun.php" method="POST" enctype="multipart/form-data">
         <div class="modal-body">
@@ -402,6 +415,69 @@ $nama_belakang = $name_parts[1] ?? '';
 <div class="modal modal-blur fade" id="modalUbahPassword" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
     <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 text-warning" width="24" height="24"
+            viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z" />
+            <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" />
+            <path d="M8 11v-4a4 4 0 1 1 8 0v4" />
+          </svg>
+          Ubah Password
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+
+      <form action="<?= $base_url ?>/akun/update_password.php" method="POST">
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label class="form-label required">Password Saat Ini</label>
+            <input type="password"
+                   name="password_lama"
+                   class="form-control"
+                   placeholder="Masukkan password lama"
+                   required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label required">Password Baru</label>
+            <input type="password"
+                   name="password_baru"
+                   class="form-control"
+                   placeholder="Min. 8 karakter"
+                   minlength="8"
+                   required>
+          </div>
+
+          <div class="mb-0">
+            <label class="form-label required">Konfirmasi Password Baru</label>
+            <input type="password"
+                   name="konfirmasi_password"
+                   class="form-control"
+                   placeholder="Ulangi password baru"
+                   minlength="8"
+                   required>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">
+            Batal
+          </button>
+          <button type="submit" class="btn btn-warning">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24"
+              viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z" />
+              <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" />
+              <path d="M8 11v-4a4 4 0 1 1 8 0v4" />
+            </svg>
+            Ubah Password
+          </button>
         </div>
       </form>
 

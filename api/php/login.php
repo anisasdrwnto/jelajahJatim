@@ -63,6 +63,9 @@
                         <div class="mb-4">
                             <label for="password" class="form-label fw-medium text-secondary">Password</label>
                             <input type="password" class="form-control py-2" id="password" placeholder="••••••••" required>
+                            <span class="toggle-password" onclick="togglePassword('password', this)">
+                                    <i class="bi bi-eye-slash"></i>
+                            </span>
                         </div>
                         <button type="button" class="btn btn-primary-custom w-100 rounded-3" id="btnLogin">Masuk Sekarang</button>
                     </form>
@@ -97,5 +100,18 @@
         const BASE_URL = "/api/";  
     </script>
     <script src="/js/login.js"></script>
+    <script>
+        function togglePassword(fieldId, btn) {
+            const input = document.getElementById(fieldId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('bi-eye-slash', 'bi-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('bi-eye', 'bi-eye-slash');
+            }
+        }
+    </script>
 </body>
 </html>

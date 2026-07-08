@@ -84,17 +84,6 @@ $nama_belakang = $name_parts[1] ?? '';
 
           <div class="dropdown-divider"></div>
 
-          <!-- <a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modalEditAkun">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon dropdown-item-icon" width="24" height="24"
-              viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
-              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-              <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
-              <path d="M12 10m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
-              <path d="M6.168 18.849a4 4 0 0 1 3.832 -2.849h4a4 4 0 0 1 3.834 2.855" />
-            </svg>
-            Edit Informasi Akun
-          </a> -->
-
           <a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modalUbahPassword">
             <svg xmlns="http://www.w3.org/2000/svg" class="icon dropdown-item-icon" width="24" height="24"
               viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
@@ -281,19 +270,6 @@ $nama_belakang = $name_parts[1] ?? '';
   <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable" role="document">
     <div class="modal-content">
 
-      <!-- <div class="modal-header">
-        <h5 class="modal-title">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 text-primary" width="24" height="24"
-            viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-            <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
-            <path d="M12 10m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
-            <path d="M6.168 18.849a4 4 0 0 1 3.832 -2.849h4a4 4 0 0 1 3.834 2.855" />
-          </svg>
-          Edit Informasi Akun
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
-      </div> -->
 
       <form action="<?= $base_url ?>/akun/update_akun.php" method="POST" enctype="multipart/form-data">
         <div class="modal-body">

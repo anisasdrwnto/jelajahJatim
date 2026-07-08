@@ -6,17 +6,6 @@ $isLoggedIn = isset($_SESSION['mus_id_users']);
 $userRole   = $_SESSION['role'] ?? 'Guest';
 $userName   = htmlspecialchars($_SESSION['mus_name'] ?? 'User');
 
-// 2. Proteksi halaman admin
-$halaman_publik = ['index.php', 'login.php', 'register.php'];
-$current_file = basename($_SERVER['PHP_SELF']);
-
-if (!in_array($current_file, $halaman_publik)) {
-    if (!$isLoggedIn || !in_array($userRole, ['ADMIN', 'ADMIN_MASTER'])) {
-        header("Location: index.php");
-        exit;
-    }
-}
-
 // 3. Redirect khusus Admin
 if ($isLoggedIn) {
     if ($userRole === 'ADMIN_MASTER') {
@@ -34,7 +23,7 @@ if ($isLoggedIn) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jelajah Jawa Timur</title>
-
+    <link rel="icon" type="image/png" href="/assets/logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">

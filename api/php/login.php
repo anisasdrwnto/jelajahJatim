@@ -62,10 +62,12 @@
                         </div>
                         <div class="mb-4">
                             <label for="password" class="form-label fw-medium text-secondary">Password</label>
-                            <input type="password" class="form-control py-2" id="password" placeholder="••••••••" required>
-                            <span class="toggle-password" onclick="togglePassword('password', this)">
-                                    <i class="bi bi-eye-slash"></i>
-                            </span>
+                            <div class="input-group">
+                                <input type="password" class="form-control py-2 border-end-0" id="password" placeholder="••••••••" required>
+                                <span class="input-group-text bg-transparent" onclick="togglePassword('password', this)" style="cursor: pointer;">
+                                    <i class="bi bi-eye-slash text-muted"></i>
+                                </span>
+                            </div>
                         </div>
                         <button type="button" class="btn btn-primary-custom w-100 rounded-3" id="btnLogin">Masuk Sekarang</button>
                     </form>

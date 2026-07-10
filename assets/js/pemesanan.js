@@ -268,7 +268,7 @@ function renderTbodyPemesanan(data, keyword) {
 
 function loadCardPemesanan() {
     $.ajax({
-        url      : BASE_URL + 'proses/proses_pemesanan.php',
+        url      : BASE_URL + 'proses/proses_daftar_tiket.php',
         type     : 'GET',
         dataType : 'json',
         data     : { action: 'statistik' },
